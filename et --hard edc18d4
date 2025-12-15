@@ -1,0 +1,7 @@
+[33m79cd5c7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: reset: moving to fd2707491e72332c1df544241af87e5010dbf4e9^
+[33medc18d4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: commit: configration and migration is done
+[33m79cd5c7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{2}: reset: moving to fd2707491e72332c1df544241af87e5010dbf4e9^
+[33mc57b538[m HEAD@{3}: commit: auth migration and jpa maping is done
+[33m9e9743b[m HEAD@{4}: commit: configration is done
+[33mfd27074[m HEAD@{5}: commit: configration is done
+[33m79cd5c7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{6}: clone: from https://github.com/Leta-Kasahun/Jobsphere.git

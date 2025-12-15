@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui;background:#f8fafc;padding:20px}
+.container{max-width:600px;margin:auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px rgba(0,0,0,0.05)}
+.header{background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:40px 30px;text-align:center;color:white}
+.logo{font-size:32px;font-weight:800;letter-spacing:1px}
+.content{padding:40px 30px}
+.otp-box{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:12px;padding:32px;text-align:center;margin:32px 0;border:2px solid #bae6fd}
+.otp-code{font-size:48px;font-weight:800;color:#0369a1;letter-spacing:8px;font-family:monospace;margin:12px 0}
+.footer{background:#f8fafc;padding:24px 30px;text-align:center;border-top:1px solid #e2e8f0}
+@media(max-width:600px){.content,.header,.footer{padding:24px 20px}.otp-code{font-size:36px;letter-spacing:6px}}
+</style></head>
+<body>
+<div class="container">
+<div class="header"><div class="logo">JOBSPHERE</div></div>
+<div class="content">
+<div style="font-size:22px;color:#1e293b;margin-bottom:16px;font-weight:600">Your Verification Code</div>
+<div style="color:#475569;margin-bottom:24px;line-height:1.7">Use the code below to verify your account.</div>
+<div class="otp-box">
+<div style="font-size:13px;color:#0ea5e9;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Verification Code</div>
+<div class="otp-code">{{otpCode}}</div>
+<div style="font-size:14px;color:#dc2626;font-weight:500;margin-top:8px">⏰ Expires in 10 minutes</div>
+</div>
+<div style="background:#f1f5f9;padding:16px;border-radius:8px;font-size:14px;color:#475569;margin:24px 0">🔒 Never share this code with anyone.</div>
+</div>
+<div class="footer">
+<div style="color:#64748b;font-size:14px">JobSphere Authentication</div>
+</div>
+</div>
+</body>
+</html>
