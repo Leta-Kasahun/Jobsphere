@@ -11,4 +11,4 @@ public class VerifyResetOtpRequest {
     
     @NotBlank
     private String otp;
-}
+}  

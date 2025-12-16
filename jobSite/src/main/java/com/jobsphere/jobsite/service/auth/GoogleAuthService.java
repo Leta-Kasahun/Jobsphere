@@ -1,3 +1,4 @@
+
 package com.jobsphere.jobsite.service.auth;
 
 import com.jobsphere.jobsite.config.security.JwtTokenProvider;
@@ -104,3 +105,4 @@ public class GoogleAuthService {
         );
     }
 }
+

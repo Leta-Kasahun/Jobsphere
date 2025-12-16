@@ -12,7 +12,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -54,3 +55,4 @@ public class User {
     
     private Instant deletedAt;
 }
+

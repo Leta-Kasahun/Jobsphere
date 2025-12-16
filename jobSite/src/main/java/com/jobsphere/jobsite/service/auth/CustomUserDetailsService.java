@@ -1,3 +1,4 @@
+
 package com.jobsphere.jobsite.service.auth;
 
 import com.jobsphere.jobsite.repository.UserRepository;
@@ -8,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,13 +27,16 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Account is inactive");
         }
 
-        String role = user.getUserType() == null ? "" : 
-            "ROLE_" + user.getUserType().name();
-        
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        if (user.getUserType() != null) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getUserType().name()));
+        }
+
         return new User(
             user.getEmail(),
             user.getPasswordHash() != null ? user.getPasswordHash() : "",
-            List.of(new SimpleGrantedAuthority(role))
+            authorities
         );
     }
 }
+

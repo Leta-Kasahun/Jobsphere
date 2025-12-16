@@ -1,3 +1,4 @@
+
 package com.jobsphere.jobsite.repository.auth;
 
 import com.jobsphere.jobsite.model.auth.Otp;
@@ -20,3 +21,5 @@ public interface OtpRepository extends JpaRepository<Otp, UUID> {
     @Query("UPDATE Otp o SET o.used = true WHERE o.email = :email AND o.type = :type")
     void markAllAsUsed(@Param("email") String email, @Param("type") OtpType type);
 }
+
+

@@ -10,3 +10,4 @@ public class AdminOtpRequest {
     @NotBlank
     private String otp;
 }
+

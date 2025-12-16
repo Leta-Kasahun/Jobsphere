@@ -3,6 +3,7 @@ package com.jobsphere.jobsite.config.security;
 import com.jobsphere.jobsite.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
 import java.util.Map;
 
 @Component
@@ -19,16 +20,22 @@ public class JwtTokenProvider {
     }
 
     public String createOtpToken(String email, String userType) {
-        return jwtUtils.generateToken(email, Map.of(
+        Map<String, Object> claims = userType != null ? Map.of(
             "userType", userType,
             "purpose", "OTP_VERIFICATION"
-        ), 5 * 60 * 1000L);
+        ) : Map.of("purpose", "OTP_VERIFICATION");
+        return jwtUtils.generateToken(email, claims, 5 * 60 * 1000L);
     }
 
     public String createPasswordResetToken(String email) {
         return jwtUtils.generateToken(email, Map.of(
             "purpose", "PASSWORD_RESET"
         ), 15 * 60 * 1000L);
+    }
+
+    // Generic token creator
+    public String createToken(String subject, Map<String, Object> claims, Long customExpirationMs) {
+        return jwtUtils.generateToken(subject, claims, customExpirationMs);
     }
 
     public boolean validate(String token) {

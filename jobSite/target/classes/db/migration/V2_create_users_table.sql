@@ -1,4 +1,4 @@
--- Regular users table (Job Seekers & Employers ONLY)
+
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -14,7 +14,6 @@ CREATE TABLE users (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Indexes for users
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_user_type ON users(user_type);
 CREATE INDEX idx_users_google_id ON users(google_id) WHERE google_id IS NOT NULL;

@@ -1,3 +1,4 @@
+
 package com.jobsphere.jobsite.config.security;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;

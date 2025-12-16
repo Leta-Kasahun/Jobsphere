@@ -1,3 +1,4 @@
+
 package com.jobsphere.jobsite.config.security;
 
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher("/api/v1/**")
+            .securityMatcher("/**")
             .csrf().disable()
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
@@ -28,19 +29,21 @@ public class SecurityConfig {
                     "/api/v1/public/**",
                     "/oauth2/authorization/**",
                     "/login/oauth2/code/**",
-                    "/error"
+                    "/error",
+                    "/actuator/health",
+                    "/actuator/info"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
                 .defaultSuccessUrl("/api/v1/auth/oauth-success", true)
             )
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Allow sessions when required (needed for OAuth2 authorization request persistence)
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

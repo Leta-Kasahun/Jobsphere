@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,40 +26,25 @@ public class AuthService {
 
     @Transactional
     public Map<String, Object> register(String email, String password, UserType userType) {
-        if (userRepository.existsByEmail(email)) {
-            throw new AuthException("Email already registered");
-        }
+        if (userRepository.existsByEmail(email)) throw new AuthException("Email already registered");
 
         User user = User.builder()
-            .email(email)
-            .passwordHash(passwordEncoder.encode(password))
-            .userType(userType)
-            .emailVerified(false)
-            .build();
+            .email(email).passwordHash(passwordEncoder.encode(password))
+            .userType(userType).emailVerified(false).build();
 
         userRepository.save(user);
-        
         otpService.sendOtp(email, OtpType.EMAIL_VERIFICATION);
-        
-        String otpToken = jwtTokenProvider.createOtpToken(email, userType.name());
-        
-        return Map.of(
-            "message", "Check email for OTP",
-            "otpToken", otpToken,
-            "userId", user.getId()
-        );
+
+        return Map.of("message", "Check email for OTP",
+            "otpToken", jwtTokenProvider.createOtpToken(email, userType != null ? userType.name() : null),
+            "userId", user.getId());
     }
 
     @Transactional
     public Map<String, Object> verifyOtp(String email, String otp, OtpType type) {
-        boolean valid = otpService.validateOtp(email, otp, type);
-        
-        if (!valid) {
-            throw new AuthException("Invalid OTP");
-        }
+        if (!otpService.validateOtp(email, otp, type)) throw new AuthException("Invalid OTP");
 
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
 
         if (type == OtpType.EMAIL_VERIFICATION) {
             user.setEmailVerified(true);
@@ -68,97 +53,83 @@ public class AuthService {
 
         otpRepository.markAllAsUsed(email, type);
 
-        String token = jwtTokenProvider.createUserToken(email, user.getUserType().name());
-        
-        return Map.of(
-            "token", token,
-            "email", email,
-            "userType", user.getUserType()
-        );
+        if (type == OtpType.EMAIL_VERIFICATION && user.getUserType() == null) {
+            String tempToken = jwtTokenProvider.createToken(email,
+                Map.of("purpose", "ROLE_SELECTION"),
+                10 * 60 * 1000L); // 10 minutes
+            return Map.of(
+                "needsRoleSelection", true,
+                "email", email,
+                "tempToken", tempToken
+            );
+        }
+
+
+        String accessToken = jwtTokenProvider.createUserToken(email, user.getUserType().name());
+        String refreshToken = createRefreshToken(email);
+
+        return Map.of("token", accessToken, "refreshToken", refreshToken, "email", email, "userType", user.getUserType());
     }
 
     public Map<String, Object> login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthException("Invalid credentials"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("Invalid credentials"));
 
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new AuthException("Invalid credentials");
-        }
-
-        if (!user.isEmailVerified()) {
-            throw new AuthException("Email not verified");
-        }
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) throw new AuthException("Invalid credentials");
+        if (!user.isEmailVerified()) throw new AuthException("Email not verified");
 
         user.setLastLogin(Instant.now());
         userRepository.save(user);
 
-        String token = jwtTokenProvider.createUserToken(email, user.getUserType().name());
-        
-        return Map.of(
-            "token", token,
-            "email", email,
-            "userType", user.getUserType()
-        );
+        return Map.of("token", jwtTokenProvider.createUserToken(email, user.getUserType().name()),
+            "email", email, "userType", user.getUserType());
     }
 
     public Map<String, Object> forgotPassword(String email) {
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthException("User not found"));
-        
+        userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
         otpService.sendOtp(email, OtpType.PASSWORD_RESET);
-        
-        return Map.of(
-            "message", "Password reset OTP sent to email",
-            "email", email
-        );
+        return Map.of("message", "Password reset OTP sent to email", "email", email);
     }
 
     public Map<String, Object> verifyResetOtp(String email, String otp) {
-        boolean valid = otpService.validateOtp(email, otp, OtpType.PASSWORD_RESET);
-        
-        if (!valid) {
-            throw new AuthException("Invalid OTP");
-        }
+        if (!otpService.validateOtp(email, otp, OtpType.PASSWORD_RESET)) throw new AuthException("Invalid OTP");
 
         otpRepository.markAllAsUsed(email, OtpType.PASSWORD_RESET);
 
-        String resetToken = jwtTokenProvider.createPasswordResetToken(email);
-        
-        return Map.of(
-            "resetToken", resetToken,
-            "email", email,
-            "message", "OTP verified. You can now reset password."
-        );
+        return Map.of("resetToken", jwtTokenProvider.createPasswordResetToken(email),
+            "email", email, "message", "OTP verified");
     }
 
     @Transactional
     public Map<String, Object> resetPasswordWithToken(String resetToken, String newPassword, String confirmPassword) {
-        if (!newPassword.equals(confirmPassword)) {
-            throw new AuthException("Passwords do not match");
-        }
-        
-        if (!jwtTokenProvider.validate(resetToken)) {
-            throw new AuthException("Invalid or expired reset token");
-        }
-        
+        if (!newPassword.equals(confirmPassword)) throw new AuthException("Passwords do not match");
+        if (!jwtTokenProvider.validate(resetToken)) throw new AuthException("Invalid reset token");
+
         Map<String, Object> claims = jwtTokenProvider.getClaims(resetToken);
-        String purpose = (String) claims.get("purpose");
-        
-        if (!"PASSWORD_RESET".equals(purpose)) {
-            throw new AuthException("Invalid reset token");
-        }
-        
+        if (!"PASSWORD_RESET".equals(claims.get("purpose"))) throw new AuthException("Invalid reset token");
+
         String email = jwtTokenProvider.getSubject(resetToken);
-        
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        return Map.of(
-            "message", "Password reset successful",
-            "email", email
-        );
+        return Map.of("message", "Password reset successful", "email", email);
+    }
+
+    public String createRefreshToken(String email) {
+        return jwtTokenProvider.createToken(email, Map.of("type", "REFRESH"), 604800000L);
+    }
+
+    public Map<String, Object> refreshAccessToken(String refreshToken) {
+        if (!jwtTokenProvider.validate(refreshToken)) throw new AuthException("Invalid refresh token");
+
+        Map<String, Object> claims = jwtTokenProvider.getClaims(refreshToken);
+        if (!"REFRESH".equals(claims.get("type"))) throw new AuthException("Invalid token type");
+
+        String email = jwtTokenProvider.getSubject(refreshToken);
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
+
+        return Map.of("accessToken", jwtTokenProvider.createUserToken(email, user.getUserType().name()),
+            "refreshToken", createRefreshToken(email), "email", email, "userType", user.getUserType());
     }
 }

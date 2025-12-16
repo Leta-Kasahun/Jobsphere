@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public final class SecurityUtils {
     private SecurityUtils() {}
-    
+
     public static Optional<String> currentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() == null) {
@@ -19,12 +19,13 @@ public final class SecurityUtils {
         }
         return Optional.of(principal.toString());
     }
-    
+
     public static boolean hasRole(String role) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) return false;
+        String normalized = role.startsWith("ROLE_") ? role : "ROLE_" + role;
         return auth.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
-            .anyMatch(role::equals);
+            .anyMatch(a -> a.equals(role) || a.equals(normalized));
     }
 }

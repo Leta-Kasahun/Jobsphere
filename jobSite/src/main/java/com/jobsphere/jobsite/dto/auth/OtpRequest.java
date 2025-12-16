@@ -14,6 +14,6 @@ public class OtpRequest {
     @NotBlank
     private String otp;
     
-    @NotNull
+   
     private OtpType type;
 }

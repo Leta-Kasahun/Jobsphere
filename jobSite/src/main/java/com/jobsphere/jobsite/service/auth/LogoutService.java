@@ -27,3 +27,4 @@ public class LogoutService {
         jwtCookieService.clearAdminCookies(response);
     }
 }
+

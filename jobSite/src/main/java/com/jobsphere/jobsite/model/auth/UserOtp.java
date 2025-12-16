@@ -9,12 +9,12 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "user_otps") 
+@Table(name = "user_otps")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Otp {
+public class UserOtp {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -23,8 +23,10 @@ public class Otp {
     @JoinColumn(name = "user_id")
     private User user;
     
+    @Column(nullable = false)
     private String email;
     
+    @Column(name = "code_hash", nullable = false)
     private String codeHash;
     
     @Enumerated(EnumType.STRING)
@@ -32,15 +34,22 @@ public class Otp {
     private OtpType type;
     
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private Instant createdAt;
     
-    @Column(nullable = false)
+    @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
     
     @Builder.Default
-    private boolean used = false;
+    private Boolean used = false;
+    
+    @Version
+    private Integer version;
     
     @Builder.Default
-    private Integer attempts = 0;
+    @Column(name = "attempt_count")
+    private Integer attemptCount = 0;
+    
+    @Column(name = "locked_until")
+    private Instant lockedUntil;
 }
