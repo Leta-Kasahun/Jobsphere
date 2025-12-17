@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
@@ -33,19 +32,15 @@ public class AuthController {
 
     @PostMapping("/verify-otp")
     public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody OtpRequest request, HttpServletResponse response) {
-
         OtpType type = request.getType() == null ? OtpType.EMAIL_VERIFICATION : request.getType();
-
-        Map<String, Object> result = authService.verifyOtp(
-            request.getEmail(), request.getOtp(), type);
-
-
+        Map<String, Object> result = authService.verifyOtp(request.getEmail(), request.getOtp(), type);
+        
         if (type == OtpType.EMAIL_VERIFICATION && result.get("token") != null) {
             String accessToken = (String) result.get("token");
             String refreshToken = (String) result.get("refreshToken");
             jwtCookieService.setUserCookies(response, accessToken, refreshToken);
         }
-
+        
         return ResponseEntity.ok(result);
     }
 
