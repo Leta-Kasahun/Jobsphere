@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -75,6 +74,11 @@ public class AuthService {
     public Map<String, Object> login(String email, String password) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("Invalid credentials"));
 
+        // If the user signed up with OAuth (no password) inform client to use Google
+        // login
+        if (user.getPasswordHash() == null)
+            throw new AuthException("Please use Google login");
+
         if (!passwordEncoder.matches(password, user.getPasswordHash()))
             throw new AuthException("Invalid credentials");
         if (!user.isEmailVerified())
@@ -83,8 +87,10 @@ public class AuthService {
         user.setLastLogin(Instant.now());
         userRepository.save(user);
 
-        return Map.of("token", jwtTokenProvider.createUserToken(email, user.getUserType().name()),
-                "email", email, "userType", user.getUserType());
+        // Safely handle null userType
+        String userTypeName = user.getUserType() != null ? user.getUserType().name() : "UNKNOWN";
+        return Map.of("token", jwtTokenProvider.createUserToken(email, userTypeName),
+                "email", email, "userType", userTypeName);
     }
 
     public Map<String, Object> forgotPassword(String email) {
@@ -93,6 +99,7 @@ public class AuthService {
         return Map.of("message", "Password reset OTP sent to email", "email", email);
     }
 
+    @Transactional
     public Map<String, Object> verifyResetOtp(String email, String otp) {
         if (!otpService.validateOtp(email, otp, OtpType.PASSWORD_RESET))
             throw new AuthException("Invalid OTP");
@@ -141,4 +148,5 @@ public class AuthService {
         return Map.of("accessToken", jwtTokenProvider.createUserToken(email, user.getUserType().name()),
                 "refreshToken", createRefreshToken(email), "email", email, "userType", user.getUserType());
     }
+
 }
