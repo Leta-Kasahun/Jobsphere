@@ -14,6 +14,7 @@ C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jo
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\controller\auth\AuthController.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\controller\auth\OAuthSuccessController.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\controller\auth\RoleController.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\controller\seeker\SeekerBasicInfoController.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\admin\AdminLoginRequest.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\admin\AdminOtpRequest.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\admin\AdminResetPasswordRequest.java
@@ -23,7 +24,10 @@ C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jo
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\OtpRequest.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\RegisterRequest.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\ResetPasswordWithTokenRequest.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\SelectRoleRequest.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\VerifyResetOtpRequest.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\seeker\SeekerBasicInfoDto.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\shared\AddressDto.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\exception\AuthException.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\exception\GlobalExceptionHandler.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\exception\OtpException.java
@@ -33,12 +37,16 @@ C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jo
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\model\auth\OAuthAccount.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\model\auth\Otp.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\model\auth\RefreshToken.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\model\seeker\Seeker.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\model\shared\Address.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\model\User.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\repository\admin\AdminOtpRepository.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\repository\admin\AdminRepository.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\repository\auth\OAuthAccountRepository.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\repository\auth\OtpRepository.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\repository\auth\RefreshTokenRepository.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\repository\seeker\AddressRepository.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\repository\seeker\SeekerRepository.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\repository\UserRepository.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\admin\AdminAuthService.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\admin\AdminOtpService.java
@@ -47,6 +55,7 @@ C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jo
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\auth\GoogleAuthService.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\auth\LogoutService.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\auth\OtpService.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\seeker\SeekerBasicInfoService.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\utils\DateUtils.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\utils\EmailTemplateBuilder.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\utils\JwtUtils.java

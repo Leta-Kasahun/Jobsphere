@@ -26,7 +26,6 @@ public class AuthService {
     @Transactional
     public Map<String, Object> register(String email, String password, UserType userType) {
         if (userRepository.existsByEmail(email)) throw new AuthException("Email already registered");
-        if (userType == null) userType = UserType.SEEKER;
         
         User user = User.builder()
             .email(email).passwordHash(passwordEncoder.encode(password))
@@ -35,8 +34,11 @@ public class AuthService {
         userRepository.save(user);
         otpService.sendOtp(email, OtpType.EMAIL_VERIFICATION);
         
+        String otpToken = jwtTokenProvider.createOtpToken(email, 
+            userType != null ? userType.name() : null);
+        
         return Map.of("message", "Check email for OTP",
-            "otpToken", jwtTokenProvider.createOtpToken(email, userType.name()),
+            "otpToken", otpToken,
             "userId", user.getId());
     }
 
@@ -53,14 +55,17 @@ public class AuthService {
         otpRepository.markAllAsUsed(email, type);
         
         if (type == OtpType.EMAIL_VERIFICATION && user.getUserType() == null) {
-            String tempToken = jwtTokenProvider.createToken(email, Map.of("purpose", "ROLE_SELECTION"), 10 * 60 * 1000L);
+            String tempToken = jwtTokenProvider.createToken(email, 
+                Map.of("purpose", "ROLE_SELECTION"), 10 * 60 * 1000L);
             return Map.of("needsRoleSelection", true, "email", email, "tempToken", tempToken);
         }
         
-        String accessToken = jwtTokenProvider.createUserToken(email, user.getUserType().name());
+        String userTypeName = user.getUserType() != null ? user.getUserType().name() : "UNKNOWN";
+        String accessToken = jwtTokenProvider.createUserToken(email, userTypeName);
         String refreshToken = createRefreshToken(email);
         
-        return Map.of("token", accessToken, "refreshToken", refreshToken, "email", email, "userType", user.getUserType());
+        return Map.of("token", accessToken, "refreshToken", refreshToken, 
+            "email", email, "userType", user.getUserType());
     }
 
     public Map<String, Object> login(String email, String password) {
@@ -73,7 +78,8 @@ public class AuthService {
         userRepository.save(user);
         
         String userTypeName = user.getUserType() != null ? user.getUserType().name() : "UNKNOWN";
-        return Map.of("token", jwtTokenProvider.createUserToken(email, userTypeName), "email", email, "userType", userTypeName);
+        return Map.of("token", jwtTokenProvider.createUserToken(email, userTypeName), 
+            "email", email, "userType", userTypeName);
     }
 
     public Map<String, Object> forgotPassword(String email) {
@@ -126,5 +132,9 @@ public class AuthService {
         String userTypeName = user.getUserType() != null ? user.getUserType().name() : "UNKNOWN";
         return Map.of("accessToken", jwtTokenProvider.createUserToken(email, userTypeName),
             "refreshToken", createRefreshToken(email), "email", email, "userType", userTypeName);
+    }
+
+    public String generateUserToken(String email, String userType) {
+        return jwtTokenProvider.createUserToken(email, userType);
     }
 }
