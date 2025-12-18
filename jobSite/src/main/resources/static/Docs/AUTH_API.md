@@ -1,5 +1,5 @@
 # Authentication Flow Documentation
----
+
 ## 1. User Registration Flow
 Step 1: User registers with email and password, selects user type (Seeker/Employer)  
 Step 2: System sends OTP to email for verification  
@@ -44,7 +44,6 @@ Step 5: After verification, admin is redirected to admin dashboard
 ### Admin:
 - `POST /api/v1/admin/auth/login` - Admin login (returns OTP)
 - `POST /api/v1/admin/auth/verify-otp` - Admin verify OTP, get access token
----
 
 # JobSphere Authentication API
 
