@@ -50,7 +50,7 @@ Step 5: After verification, admin is redirected to admin dashboard
 **Base URL:** `http://localhost:8080`
 
 ## USER AUTH ENDPOINTS
-
+```
 POST /api/v1/auth/register                 → Create new user account
 POST /api/v1/auth/verify-otp               → Confirm email with OTP  
 POST /api/v1/auth/login                    → Login with email/password
@@ -61,9 +61,9 @@ POST /api/v1/auth/logout                   → Clear authentication
 POST /api/v1/auth/refresh                  → Get new access token
 GET  /api/v1/auth/oauth-success            → Handle Google login callback
 POST /api/v1/auth/select-role              → Set role for new Google user
-
+```
 ## ADMIN AUTH ENDPOINTS
-
+```
 POST /api/v1/admin/auth/login              → Admin login (requires OTP)
 POST /api/v1/admin/auth/verify-otp         → Complete admin login with OTP
 POST /api/v1/admin/auth/forgot-password    → Request admin password reset
@@ -71,7 +71,7 @@ POST /api/v1/admin/auth/verify-reset-otp   → Verify admin reset OTP
 POST /api/v1/admin/auth/reset-password     → Set new admin password
 POST /api/v1/admin/auth/logout             → Clear admin authentication
 POST /api/v1/admin/auth/refresh            → Renew admin access token
-
+```
 ## GOOGLE OAUTH
 
 GET /oauth2/authorization/google           → Start Google login

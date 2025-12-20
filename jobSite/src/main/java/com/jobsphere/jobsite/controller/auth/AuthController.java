@@ -27,14 +27,13 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(
-            request.getEmail(), request.getPassword(), request.getUserType()));
+                request.getEmail(), request.getPassword(), request.getUserType()));
     }
 
     @PostMapping("/verify-otp")
     public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody OtpRequest request, HttpServletResponse response) {
         OtpType type = request.getType() == null ? OtpType.EMAIL_VERIFICATION : request.getType();
         Map<String, Object> result = authService.verifyOtp(request.getEmail(), request.getOtp(), type);
-        
         if (type == OtpType.EMAIL_VERIFICATION && result.get("token") != null) {
             String accessToken = (String) result.get("token");
             String refreshToken = (String) result.get("refreshToken");
@@ -45,7 +44,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequest request,
+            HttpServletResponse response) {
         Map<String, Object> result = authService.login(request.getEmail(), request.getPassword());
         String accessToken = (String) result.get("token");
         String refreshToken = authService.createRefreshToken(request.getEmail());
@@ -64,9 +64,10 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, Object>> resetPassword(@Valid @RequestBody ResetPasswordWithTokenRequest request) {
+    public ResponseEntity<Map<String, Object>> resetPassword(
+            @Valid @RequestBody ResetPasswordWithTokenRequest request) {
         return ResponseEntity.ok(authService.resetPasswordWithToken(
-            request.getResetToken(), request.getNewPassword(), request.getConfirmPassword()));
+                request.getResetToken(), request.getNewPassword(), request.getConfirmPassword()));
     }
 
     @PostMapping("/logout")
@@ -92,11 +93,12 @@ public class AuthController {
     }
 
     private String getCookieValue(HttpServletRequest request, String name) {
-        if (request.getCookies() == null) return null;
+        if (request.getCookies() == null)
+            return null;
         return Arrays.stream(request.getCookies())
-            .filter(cookie -> name.equals(cookie.getName()))
-            .map(Cookie::getValue)
-            .findFirst()
-            .orElse(null);
+                .filter(cookie -> name.equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 }
