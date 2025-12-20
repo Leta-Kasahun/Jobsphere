@@ -10,6 +10,6 @@ import java.util.UUID;
 @Repository
 public interface AdminRepository extends JpaRepository<Admin, UUID> {
     Optional<Admin> findByEmail(String email);
+
+    Optional<Admin> findByEmailIgnoreCase(String email);
 }
-
-

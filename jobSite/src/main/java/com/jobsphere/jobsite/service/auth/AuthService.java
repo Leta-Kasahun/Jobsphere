@@ -45,7 +45,7 @@ public class AuthService {
         if (!otpService.validateOtp(email, otp, type))
             throw new AuthException("Invalid OTP");
 
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
+        User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new AuthException("User not found"));
 
         if (type == OtpType.EMAIL_VERIFICATION) {
             user.setEmailVerified(true);
@@ -72,7 +72,8 @@ public class AuthService {
     }
 
     public Map<String, Object> login(String email, String password) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("Invalid credentials"));
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new AuthException("Invalid credentials"));
 
         // If the user signed up with OAuth (no password) inform client to use Google
         // login
@@ -94,7 +95,7 @@ public class AuthService {
     }
 
     public Map<String, Object> forgotPassword(String email) {
-        userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
+        userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new AuthException("User not found"));
         otpService.sendOtp(email, OtpType.PASSWORD_RESET);
         return Map.of("message", "Password reset OTP sent to email", "email", email);
     }
@@ -122,7 +123,7 @@ public class AuthService {
             throw new AuthException("Invalid reset token");
 
         String email = jwtTokenProvider.getSubject(resetToken);
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
+        User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new AuthException("User not found"));
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
@@ -143,7 +144,7 @@ public class AuthService {
             throw new AuthException("Invalid token type");
 
         String email = jwtTokenProvider.getSubject(refreshToken);
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
+        User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new AuthException("User not found"));
 
         String userTypeName = user.getUserType() != null ? user.getUserType().name() : "UNKNOWN";
         return Map.of("accessToken", jwtTokenProvider.createUserToken(email, userTypeName),
@@ -160,7 +161,7 @@ public class AuthService {
             throw new AuthException("Invalid token purpose");
 
         String email = jwtTokenProvider.getSubject(tempToken);
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
+        User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new AuthException("User not found"));
 
         user.setUserType(userType);
         userRepository.save(user);

@@ -110,12 +110,7 @@ com\jobsphere\jobsite\dto\admin\AdminResetPasswordRequest.class
 com\jobsphere\jobsite\dto\auth\LoginRequest.class
 com\jobsphere\jobsite\model\auth\OAuthAccount$OAuthAccountBuilder.class
 com\jobsphere\jobsite\dto\auth\ResetPasswordWithTokenRequest.class
-com\jobsphere\jobsite\controller\seeker\details\projects\ProjectController.class
-com\jobsphere\jobsite\repository\seeker\SeekerTagRepository.class
-com\jobsphere\jobsite\model\seeker\SeekerSocialLink.class
-com\jobsphere\jobsite\dto\seeker\BioDto.class
-com\jobsphere\jobsite\dto\seeker\SocialLinkDto.class
-com\jobsphere\jobsite\model\seeker\SeekerSkill$SeekerSkillBuilder.class
+com\jobsphere\jobsite\config\OpenApiConfig.class
 com\jobsphere\jobsite\service\admin\AdminAuthService.class
 com\jobsphere\jobsite\constant\Role.class
 com\jobsphere\jobsite\model\seeker\SeekerBio$SeekerBioBuilder.class

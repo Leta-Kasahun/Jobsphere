@@ -32,9 +32,31 @@ public class SeekerService {
     private final CloudinaryImageService cloudinaryImageService;
 
     private User getAuthenticatedUser() {
-        return userRepository.findByEmail(
-                SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(() -> new AuthException("User not found"));
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext()
+                .getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AuthException("User not authenticated");
+        }
+
+        String email;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+        } else if (principal instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
+            email = ((org.springframework.security.oauth2.core.user.OAuth2User) principal).getAttribute("email");
+        } else if (principal instanceof String) {
+            email = (String) principal;
+        } else {
+            email = authentication.getName();
+        }
+
+        if (email == null || "anonymousUser".equals(email)) {
+            throw new AuthException("User not found: Principal is anonymous");
+        }
+
+        return userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new AuthException("User not found: " + email));
+
     }
 
     private void validateSeekerUser(User user) {
@@ -59,10 +81,16 @@ public class SeekerService {
     public BasicInfoResponse update(BasicInfoRequest request) {
         User user = getAuthenticatedUser();
         validateSeekerUser(user);
-        Seeker seeker = seekerRepository.findById(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Seeker profile not found"));
-        updateSeekerFields(seeker, request);
-        return mapToResponse(seeker, user);
+        UUID userId = user.getId();
+        Seeker seeker = seekerRepository.findById(userId).orElse(null);
+
+        if (seeker == null) {
+            seeker = buildSeeker(userId, request);
+        } else {
+            updateSeekerFields(seeker, request);
+        }
+
+        return mapToResponse(seekerRepository.save(seeker), user);
     }
 
     @Transactional
@@ -83,8 +111,17 @@ public class SeekerService {
     @Transactional(readOnly = true)
     public BasicInfoResponse getBasicInfo() {
         User user = getAuthenticatedUser();
-        Seeker seeker = seekerRepository.findById(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Seeker profile not found"));
+        Seeker seeker = seekerRepository.findById(user.getId()).orElse(null);
+
+        if (seeker == null) {
+            // Return a default response for new users who haven't set up their profile yet
+            return BasicInfoResponse.builder()
+                    .id(user.getId())
+                    .email(user.getEmail())
+                    .profileCompletion("0%")
+                    .build();
+        }
+
         return mapToResponse(seeker, user);
     }
 
@@ -142,20 +179,22 @@ public class SeekerService {
     public BasicInfoResponse setAddress(AddressDto addressDto) {
         User user = getAuthenticatedUser();
         validateSeekerUser(user);
-        Seeker seeker = seekerRepository.findById(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Seeker profile not found"));
-        
-        if (seeker.getAddressId() != null) {
-            Address existingAddress = addressRepository.findById(seeker.getAddressId())
-                    .orElse(null);
-            if (existingAddress != null) {
-                updateAddressFields(existingAddress, addressDto);
-                addressRepository.save(existingAddress);
-                return mapToResponse(seeker, user);
-            }
+        UUID userId = user.getId();
+        Seeker seeker = seekerRepository.findById(userId).orElse(null);
+
+        if (seeker == null) {
+            seeker = Seeker.builder().id(userId).build();
         }
-        
-        Address address = buildAddress(addressDto);
+
+        Address address;
+        if (seeker.getAddressId() != null) {
+            address = addressRepository.findById(seeker.getAddressId())
+                    .orElseGet(() -> buildAddress(addressDto));
+            updateAddressFields(address, addressDto);
+        } else {
+            address = buildAddress(addressDto);
+        }
+
         Address savedAddress = addressRepository.save(address);
         seeker.setAddressId(savedAddress.getId());
         seekerRepository.save(seeker);
@@ -168,7 +207,7 @@ public class SeekerService {
         validateSeekerUser(user);
         Seeker seeker = seekerRepository.findById(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Seeker profile not found"));
-        
+
         if (seeker.getAddressId() != null) {
             seeker.setAddressId(null);
             seekerRepository.save(seeker);
@@ -203,7 +242,7 @@ public class SeekerService {
                         .map(this::mapToAddressDto)
                         .orElse(null)
                 : null;
-        
+
         return BasicInfoResponse.builder()
                 .id(seeker.getId())
                 .firstName(seeker.getFirstName())
@@ -221,13 +260,20 @@ public class SeekerService {
 
     private int calculateCompletion(Seeker seeker) {
         int total = 7, completed = 0;
-        if (isNotEmpty(seeker.getFirstName())) completed++;
-        if (isNotEmpty(seeker.getMiddleName())) completed++;
-        if (isNotEmpty(seeker.getLastName())) completed++;
-        if (isNotEmpty(seeker.getPhone())) completed++;
-        if (seeker.getGender() != null) completed++;
-        if (seeker.getDateOfBirth() != null) completed++;
-        if (seeker.getAddressId() != null) completed++;
+        if (isNotEmpty(seeker.getFirstName()))
+            completed++;
+        if (isNotEmpty(seeker.getMiddleName()))
+            completed++;
+        if (isNotEmpty(seeker.getLastName()))
+            completed++;
+        if (isNotEmpty(seeker.getPhone()))
+            completed++;
+        if (seeker.getGender() != null)
+            completed++;
+        if (seeker.getDateOfBirth() != null)
+            completed++;
+        if (seeker.getAddressId() != null)
+            completed++;
         return (completed * 100) / total;
     }
 
@@ -265,4 +311,3 @@ public class SeekerService {
         return value != null && !value.trim().isEmpty();
     }
 }
-

@@ -38,6 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/v1/auth/refresh",
             "/api/v1/admin/auth/refresh",
             "/api/v1/auth/complete-registration",
+            "/api/v1/auth/oauth-success",
             "/oauth2/authorization/**",
             "/login/oauth2/code/**",
             "/api/v1/public/**",
@@ -81,10 +82,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String email = jwtTokenProvider.getSubject(token);
         String userType = jwtTokenProvider.getUserType(token);
 
-        if (email == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+        if (email == null) {
             chain.doFilter(request, response);
             return;
         }
+
+        // Since it's a valid JWT, we want to use it regardless of any existing session
+        // authentication
+        // This ensures the principal is set correctly to the user's email from the JWT
 
         String path = request.getRequestURI();
         if (path.startsWith("/api/v1/admin/") && !"ADMIN".equals(userType)) {
