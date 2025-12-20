@@ -78,3 +78,26 @@ form-data: file = [new-photo.jpg]
 
 // Remove old photo first
 DELETE /api/v1/seekers/profile/image
+
+
+// Get full profile data
+GET /api/v1/seekers/profile/basic-info
+
+Response:
+{
+  "id": "uuid-123",
+  "firstName": "Alice",
+  "middleName": "Marie",
+  "lastName": "Johnson",
+  "phone": "+251911223344",
+  "gender": "FEMALE",
+  "dateOfBirth": "1992-05-20",
+  "email": "alice@email.com",
+  "profileCompletion": "85%",
+  "profileImageUrl": "https://cloudinary.com/image.jpg",
+  "address": {
+    "country": "Ethiopia",
+    "city": "Addis Ababa",
+    "street": "Airport Road"
+  }
+}
