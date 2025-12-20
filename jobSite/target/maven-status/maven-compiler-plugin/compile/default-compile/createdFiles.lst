@@ -7,6 +7,7 @@ com\jobsphere\jobsite\service\auth\AuthService.class
 com\jobsphere\jobsite\model\auth\RefreshToken.class
 com\jobsphere\jobsite\dto\shared\AddressDto.class
 com\jobsphere\jobsite\model\seeker\Seeker.class
+com\jobsphere\jobsite\config\CloudinaryConfig.class
 com\jobsphere\jobsite\config\security\JwtUtilsConfig.class
 com\jobsphere\jobsite\utils\DateUtils.class
 com\jobsphere\jobsite\controller\auth\RoleController.class
@@ -18,6 +19,7 @@ com\jobsphere\jobsite\constant\UserType.class
 com\jobsphere\jobsite\dto\admin\AdminVerifyResetOtpRequest.class
 com\jobsphere\jobsite\service\auth\OtpService.class
 com\jobsphere\jobsite\dto\shared\AddressDto$AddressDtoBuilder.class
+com\jobsphere\jobsite\service\shared\CloudinaryImageService.class
 com\jobsphere\jobsite\dto\seeker\BasicInfoResponse.class
 com\jobsphere\jobsite\model\admin\Admin$AdminBuilder.class
 com\jobsphere\jobsite\model\shared\Address.class
@@ -60,7 +62,6 @@ com\jobsphere\jobsite\model\auth\RefreshToken$RefreshTokenBuilder.class
 com\jobsphere\jobsite\service\admin\AdminAuthService.class
 com\jobsphere\jobsite\utils\SecurityUtils.class
 com\jobsphere\jobsite\constant\Role.class
-com\jobsphere\jobsite\repository\SeekerRepository.class
 com\jobsphere\jobsite\repository\admin\AdminOtpRepository.class
 com\jobsphere\jobsite\repository\auth\OtpRepository.class
 com\jobsphere\jobsite\exception\GlobalExceptionHandler.class
@@ -69,6 +70,7 @@ com\jobsphere\jobsite\service\shared\AddressService.class
 com\jobsphere\jobsite\dto\auth\SelectRoleRequest.class
 com\jobsphere\jobsite\exception\OtpException.class
 com\jobsphere\jobsite\repository\auth\RefreshTokenRepository.class
+com\jobsphere\jobsite\repository\seeker\SeekerRepository.class
 com\jobsphere\jobsite\dto\admin\AdminLoginRequest.class
 com\jobsphere\jobsite\dto\seeker\BasicInfoRequest.class
 com\jobsphere\jobsite\utils\EmailTemplateBuilder$1.class

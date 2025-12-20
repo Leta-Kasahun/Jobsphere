@@ -8,7 +8,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +49,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
         Map<String, Object> body = createErrorBody("not_found", ex.getMessage(), HttpStatus.NOT_FOUND);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+    
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        log.warn("Invalid argument: {}", ex.getMessage());
+        Map<String, Object> body = createErrorBody("invalid_argument", ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(body);
+    }
+    
+    @ExceptionHandler(java.io.IOException.class)
+    public ResponseEntity<Map<String, Object>> handleIOException(java.io.IOException ex) {
+        log.error("IO error occurred", ex);
+        Map<String, Object> body = createErrorBody("io_error", "File operation failed: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity.internalServerError().body(body);
     }
     
     @ExceptionHandler(Exception.class)

@@ -1,4 +1,4 @@
-package com.jobsphere.jobsite.repository;
+package com.jobsphere.jobsite.repository.seeker;
 
 import com.jobsphere.jobsite.model.seeker.Seeker;
 import org.springframework.data.jpa.repository.JpaRepository;

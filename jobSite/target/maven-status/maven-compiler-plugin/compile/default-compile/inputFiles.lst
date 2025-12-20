@@ -1,3 +1,4 @@
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\config\CloudinaryConfig.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\config\persistence\JpaConfig.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\config\security\AdminSecurityConfig.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\config\security\JwtAuthenticationFilter.java
@@ -61,6 +62,7 @@ C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jo
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\auth\OtpService.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\seeker\SeekerService.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\shared\AddressService.java
+C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\service\shared\CloudinaryImageService.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\utils\DateUtils.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\utils\EmailTemplateBuilder.java
 C:\Users\HP\OneDrive\Desktop\java-project\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\utils\JwtUtils.java
