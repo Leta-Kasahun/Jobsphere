@@ -145,8 +145,29 @@ public class AuthService {
         String email = jwtTokenProvider.getSubject(refreshToken);
         User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
 
-        return Map.of("accessToken", jwtTokenProvider.createUserToken(email, user.getUserType().name()),
-                "refreshToken", createRefreshToken(email), "email", email, "userType", user.getUserType());
+        String userTypeName = user.getUserType() != null ? user.getUserType().name() : "UNKNOWN";
+        return Map.of("accessToken", jwtTokenProvider.createUserToken(email, userTypeName),
+                "refreshToken", createRefreshToken(email), "email", email, "userType", userTypeName);
     }
 
+    @Transactional
+    public Map<String, Object> finalizeRole(String tempToken, UserType userType) {
+        if (!jwtTokenProvider.validate(tempToken))
+            throw new AuthException("Invalid or expired token");
+
+        Map<String, Object> claims = jwtTokenProvider.getClaims(tempToken);
+        if (!"ROLE_SELECTION".equals(claims.get("purpose")))
+            throw new AuthException("Invalid token purpose");
+
+        String email = jwtTokenProvider.getSubject(tempToken);
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new AuthException("User not found"));
+
+        user.setUserType(userType);
+        userRepository.save(user);
+
+        String accessToken = jwtTokenProvider.createUserToken(email, userType.name());
+        String refreshToken = createRefreshToken(email);
+
+        return Map.of("token", accessToken, "refreshToken", refreshToken, "email", email, "userType", userType);
+    }
 }

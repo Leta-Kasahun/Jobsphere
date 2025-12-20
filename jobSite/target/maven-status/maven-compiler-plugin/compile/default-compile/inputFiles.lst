@@ -23,6 +23,7 @@ C:\Users\Hp\Desktop\HireNestBackend\Jobsphere\jobSite\src\main\java\com\jobspher
 C:\Users\Hp\Desktop\HireNestBackend\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\OtpRequest.java
 C:\Users\Hp\Desktop\HireNestBackend\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\RegisterRequest.java
 C:\Users\Hp\Desktop\HireNestBackend\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\ResetPasswordWithTokenRequest.java
+C:\Users\Hp\Desktop\HireNestBackend\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\SetRoleRequest.java
 C:\Users\Hp\Desktop\HireNestBackend\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\dto\auth\VerifyResetOtpRequest.java
 C:\Users\Hp\Desktop\HireNestBackend\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\exception\AuthException.java
 C:\Users\Hp\Desktop\HireNestBackend\Jobsphere\jobSite\src\main\java\com\jobsphere\jobsite\exception\GlobalExceptionHandler.java

@@ -28,21 +28,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
-        "/api/v1/auth/register",
-        "/api/v1/auth/login",
-        "/api/v1/auth/verify-otp",
-        "/api/v1/auth/forgot-password",
-        "/api/v1/auth/reset-password",
-        "/api/v1/admin/auth/login",
-        "/api/v1/admin/auth/verify-otp",
-        "/api/v1/auth/refresh",
-        "/api/v1/admin/auth/refresh",
-        "/oauth2/authorization/**",
-        "/login/oauth2/code/**",
-        "/api/v1/public/**",
-        "/actuator/health",
-        "/actuator/info"
-    );
+            "/api/v1/auth/register",
+            "/api/v1/auth/login",
+            "/api/v1/auth/verify-otp",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/reset-password",
+            "/api/v1/admin/auth/login",
+            "/api/v1/admin/auth/verify-otp",
+            "/api/v1/auth/refresh",
+            "/api/v1/admin/auth/refresh",
+            "/api/v1/auth/complete-registration",
+            "/oauth2/authorization/**",
+            "/login/oauth2/code/**",
+            "/api/v1/public/**",
+            "/actuator/health",
+            "/actuator/info");
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -62,7 +62,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // If token invalid and it came from Authorization header -> return 401 immediately.
+        // If token invalid and it came from Authorization header -> return 401
+        // immediately.
         String authHeader = request.getHeader("Authorization");
         boolean hasAuthHeader = authHeader != null && authHeader.startsWith("Bearer ");
 
@@ -94,8 +95,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                userDetails, null, userDetails.getAuthorities()
-            );
+                    userDetails, null, userDetails.getAuthorities());
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
         } catch (Exception e) {
@@ -115,15 +115,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Check cookies
         Cookie[] cookies = request.getCookies();
-        if (cookies == null) return null;
+        if (cookies == null)
+            return null;
 
         String path = request.getRequestURI();
         String cookieName = path.startsWith("/api/v1/admin/") ? "admin_access_token" : "access_token";
 
         return Arrays.stream(cookies)
-            .filter(cookie -> cookieName.equals(cookie.getName()))
-            .map(Cookie::getValue)
-            .findFirst()
-            .orElse(null);
+                .filter(cookie -> cookieName.equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 }
