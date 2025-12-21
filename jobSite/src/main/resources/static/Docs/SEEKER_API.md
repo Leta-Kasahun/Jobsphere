@@ -101,3 +101,67 @@ Response:
     "street": "Airport Road"
   }
 }
+
+
+---
+
+# Seekers Details profile follow
+
+---
+
+1. BIO  
+Title: "Senior Software Engineer"  
+Description: "5+ years experience in Java, Spring Boot, and microservices architecture. Specialized in building scalable backend systems and REST APIs."
+
+2. SECTOR  
+Single: "Information Technology"  
+Multiple: ["Technology", "Software Development", "Fintech"]
+
+3. TAGS  
+Examples: ["Backend", "Java", "Spring Boot", "Microservices", "PostgreSQL"]
+
+4. SKILLS  
+Examples:  
+"Java Programming"  
+"Spring Framework"  
+"REST API Design"  
+"Docker"  
+"PostgreSQL"
+
+5. CV  
+
+Option A - Upload: PDF/DOC file upload  
+
+Option B - Build:
+
+json
+{
+  "title": "Software Engineer CV",
+  "about": "Experienced backend developer",
+  "experiences": [
+    {
+      "role": "Senior Developer",
+      "company": "Tech Corp",
+      "years": "2020-2024"
+    }
+  ],
+  "services": ["Backend Development", "API Design"]  or cummmunity service
+}
+
+6. PROJECTS  
+Example:  
+
+Title: "E-Commerce Platform"  
+Description: "Full-stack online shopping system"  
+URL: "https://github.com/user/ecommerce" or live links  
+Image: project-screenshot.jpg  
+Video: project-demo.mp4  
+
+7. SOCIAL MEDIA LINKS  
+Examples:  
+
+LinkedIn: https://linkedin.com/in/username  
+GitHub: https://github.com/username  
+Portfolio: https://portfolio.dev
+
+---

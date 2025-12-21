@@ -20,8 +20,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var user = userRepository.findByEmail(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+        var user = userRepository.findByEmailIgnoreCase(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
         if (!user.isActive()) {
             throw new UsernameNotFoundException("Account is inactive");
@@ -33,10 +33,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         return new User(
-            user.getEmail(),
-            user.getPasswordHash() != null ? user.getPasswordHash() : "",
-            authorities
-        );
+                user.getEmail(),
+                user.getPasswordHash() != null ? user.getPasswordHash() : "",
+                authorities);
     }
 }
-

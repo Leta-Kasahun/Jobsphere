@@ -1,5 +1,4 @@
 
-
 package com.jobsphere.jobsite.repository;
 
 import com.jobsphere.jobsite.model.User;
@@ -12,7 +11,12 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByEmailIgnoreCase(String email);
+
     Optional<User> findByGoogleId(String googleId);
+
     boolean existsByEmail(String email);
+
     boolean existsByGoogleId(String googleId);
 }

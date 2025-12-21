@@ -18,16 +18,16 @@ public class Seeker {
     @Column(name = "id")
     private UUID id;
 
-    @Column(name = "first_name", length = 100, nullable = false)
+    @Column(name = "first_name", length = 100)
     private String firstName;
 
-    @Column(name = "middle_name", length = 100, nullable = false)
+    @Column(name = "middle_name", length = 100)
     private String middleName;
 
     @Column(name = "last_name", length = 100)
     private String lastName;
 
-    @Column(length = 20, nullable = false)
+    @Column(length = 20)
     private String phone;
 
     @Enumerated(EnumType.STRING)
@@ -42,4 +42,7 @@ public class Seeker {
 
     @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
+
+    @Column(name = "cv_url", length = 500)
+    private String cvUrl;
 }

@@ -29,8 +29,8 @@ public class AdminAuthService {
     private long refreshExpirationSeconds;
 
     public Map<String, Object> login(String email, String password) {
-        Admin admin = adminRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthException("Invalid credentials"));
+        Admin admin = adminRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new AuthException("Invalid credentials"));
 
         if (!passwordEncoder.matches(password, admin.getPasswordHash())) {
             throw new AuthException("Invalid credentials");
@@ -39,21 +39,20 @@ public class AdminAuthService {
         // Use AdminOtpService instead of OtpService
         adminOtpService.sendAdminLoginOtp(admin);
 
-        String otpToken = jwtTokenProvider.createToken(email, 
-            Map.of("purpose", "ADMIN_OTP_VERIFICATION", "userType", "ADMIN"),
-            10 * 60 * 1000L); // 10 minutes
+        String otpToken = jwtTokenProvider.createToken(email,
+                Map.of("purpose", "ADMIN_OTP_VERIFICATION", "userType", "ADMIN"),
+                10 * 60 * 1000L); // 10 minutes
 
         return Map.of(
-            "message", "Admin OTP sent to email",
-            "otpToken", otpToken,
-            "email", email
-        );
+                "message", "Admin OTP sent to email",
+                "otpToken", otpToken,
+                "email", email);
     }
 
     @Transactional
     public Map<String, Object> verifyOtp(String email, String otp) {
-        Admin admin = adminRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthException("Admin not found"));
+        Admin admin = adminRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new AuthException("Admin not found"));
 
         // Use AdminOtpService to validate
         boolean valid = adminOtpService.validateAdminOtp(admin, otp, OtpType.ADMIN_LOGIN);
@@ -69,29 +68,27 @@ public class AdminAuthService {
         String refreshToken = createAdminRefreshToken(email);
 
         return Map.of(
-            "token", accessToken,
-            "refreshToken", refreshToken,
-            "email", email,
-            "role", "ADMIN"
-        );
+                "token", accessToken,
+                "refreshToken", refreshToken,
+                "email", email,
+                "role", "ADMIN");
     }
 
     public Map<String, Object> forgotPassword(String email) {
-        Admin admin = adminRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthException("Admin not found"));
+        Admin admin = adminRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new AuthException("Admin not found"));
 
         // Use AdminOtpService for password reset
         adminOtpService.sendAdminPasswordResetOtp(admin);
 
         return Map.of(
-            "message", "Admin password reset OTP sent to email",
-            "email", email
-        );
+                "message", "Admin password reset OTP sent to email",
+                "email", email);
     }
 
     public Map<String, Object> verifyResetOtp(String email, String otp) {
-        Admin admin = adminRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthException("Admin not found"));
+        Admin admin = adminRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new AuthException("Admin not found"));
 
         // Use AdminOtpService to validate password reset OTP
         boolean valid = adminOtpService.validateAdminOtp(admin, otp, OtpType.PASSWORD_RESET);
@@ -103,10 +100,9 @@ public class AdminAuthService {
         String resetToken = jwtTokenProvider.createPasswordResetToken(email);
 
         return Map.of(
-            "resetToken", resetToken,
-            "email", email,
-            "message", "OTP verified. You can now reset admin password."
-        );
+                "resetToken", resetToken,
+                "email", email,
+                "message", "OTP verified. You can now reset admin password.");
     }
 
     @Transactional
@@ -121,28 +117,26 @@ public class AdminAuthService {
 
         var claims = jwtTokenProvider.getClaims(resetToken);
         String purpose = (String) claims.get("purpose");
-
         if (!"PASSWORD_RESET".equals(purpose)) {
             throw new AuthException("Invalid reset token");
         }
 
         String email = jwtTokenProvider.getSubject(resetToken);
 
-        Admin admin = adminRepository.findByEmail(email)
-            .orElseThrow(() -> new AuthException("Admin not found"));
+        Admin admin = adminRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new AuthException("Admin not found"));
 
         admin.setPasswordHash(passwordEncoder.encode(newPassword));
         adminRepository.save(admin);
 
         return Map.of(
-            "message", "Admin password reset successful",
-            "email", email
-        );
+                "message", "Admin password reset successful",
+                "email", email);
     }
 
     private String createAdminRefreshToken(String email) {
-        return jwtTokenProvider.createToken(email, 
-            Map.of("type", "REFRESH", "userType", "ADMIN"), 
-            refreshExpirationSeconds * 1000L);
+        return jwtTokenProvider.createToken(email,
+                Map.of("type", "REFRESH", "userType", "ADMIN"),
+                refreshExpirationSeconds * 1000L);
     }
 }
