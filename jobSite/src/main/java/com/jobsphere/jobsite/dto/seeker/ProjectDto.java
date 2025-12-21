@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -27,9 +28,13 @@ public class ProjectDto {
     private String projectUrl;
 
     @Size(max = 500)
-    private String imageUrl;
+    private String imageUrl; // Keep for backward compatibility or main image
+
+    private List<String> imageUrls;
 
     @Size(max = 500)
     private String videoUrl;
-}
 
+    @Size(max = 20)
+    private String videoType; // UPLOAD, YOUTUBE
+}

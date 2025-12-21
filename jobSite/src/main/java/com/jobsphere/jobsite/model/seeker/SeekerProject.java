@@ -42,8 +42,15 @@ public class SeekerProject {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<SeekerProjectImage> images;
+
     @Column(name = "video_url", length = 500)
     private String videoUrl;
+
+    @Column(name = "video_type", length = 20)
+    @Builder.Default
+    private String videoType = "UPLOAD"; // UPLOAD, YOUTUBE
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
@@ -53,4 +60,3 @@ public class SeekerProject {
     @Column(name = "updated_at")
     private Instant updatedAt;
 }
-

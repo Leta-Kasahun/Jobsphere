@@ -32,18 +32,18 @@ public class ProjectController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProjectDto> createProject(
             @Valid @RequestPart("project") ProjectDto projectDto,
-            @RequestPart(value = "image", required = false) MultipartFile imageFile,
+            @RequestPart(value = "images", required = false) List<MultipartFile> imageFiles,
             @RequestPart(value = "video", required = false) MultipartFile videoFile) throws IOException {
-        return ResponseEntity.ok(seekerProjectService.createProject(projectDto, imageFile, videoFile));
+        return ResponseEntity.ok(seekerProjectService.createProject(projectDto, imageFiles, videoFile));
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProjectDto> updateProject(
             @PathVariable UUID id,
             @Valid @RequestPart("project") ProjectDto projectDto,
-            @RequestPart(value = "image", required = false) MultipartFile imageFile,
+            @RequestPart(value = "images", required = false) List<MultipartFile> imageFiles,
             @RequestPart(value = "video", required = false) MultipartFile videoFile) throws IOException {
-        return ResponseEntity.ok(seekerProjectService.updateProject(id, projectDto, imageFile, videoFile));
+        return ResponseEntity.ok(seekerProjectService.updateProject(id, projectDto, imageFiles, videoFile));
     }
 
     @DeleteMapping("/{id}")
@@ -52,4 +52,3 @@ public class ProjectController {
         return ResponseEntity.noContent().build();
     }
 }
-

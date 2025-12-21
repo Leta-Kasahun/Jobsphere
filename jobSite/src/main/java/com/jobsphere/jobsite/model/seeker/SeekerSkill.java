@@ -33,6 +33,9 @@ public class SeekerSkill {
     @Column(name = "skill", length = 100, nullable = false)
     private String skill;
 
+    @Column(name = "proficiency", length = 50)
+    private String proficiency;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
@@ -41,4 +44,3 @@ public class SeekerSkill {
     @Column(name = "updated_at")
     private Instant updatedAt;
 }
-

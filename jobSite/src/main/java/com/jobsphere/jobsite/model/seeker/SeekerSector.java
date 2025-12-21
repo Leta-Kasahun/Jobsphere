@@ -19,12 +19,11 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 public class SeekerSector {
     @Id
-    @Column(name = "seeker_id")
+    @Column(name = "seeker_id", nullable = false)
     private UUID seekerId;
 
-    @OneToOne
-    @JoinColumn(name = "seeker_id", referencedColumnName = "id")
-    @MapsId
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seeker_id", referencedColumnName = "id", insertable = false, updatable = false)
     private Seeker seeker;
 
     @Column(name = "sector", length = 100)
@@ -38,4 +37,3 @@ public class SeekerSector {
     @Column(name = "updated_at")
     private Instant updatedAt;
 }
-

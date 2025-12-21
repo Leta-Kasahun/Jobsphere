@@ -1,6 +1,7 @@
 package com.jobsphere.jobsite.service.shared;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,15 +19,17 @@ public class CloudinaryFileService {
     private final Cloudinary cloudinary;
 
     private static final String[] ALLOWED_IMAGE_TYPES = {
-        "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
+            "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
     };
 
     private static final String[] ALLOWED_DOCUMENT_TYPES = {
-        "application/pdf"
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     };
 
     private static final String[] ALLOWED_VIDEO_TYPES = {
-        "video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo", "video/webm"
+            "video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo", "video/webm"
     };
 
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -36,34 +39,31 @@ public class CloudinaryFileService {
     /**
      * Uploads an image to Cloudinary and returns the secure URL.
      * 
-     * @param file The image file to upload
+     * @param file   The image file to upload
      * @param folder The folder path in Cloudinary (e.g., "seekers/profile")
      * @return The secure URL of the uploaded image
      * @throws IllegalArgumentException if file validation fails
-     * @throws IOException if upload fails
+     * @throws IOException              if upload fails
      */
     public String uploadImage(MultipartFile file, String folder) throws IOException {
         validateImageFile(file);
 
         String publicId = folder + "/" + UUID.randomUUID();
-        
-        @SuppressWarnings("unchecked")
-        Map<String, Object> uploadParams = ObjectUtils.asMap(
-            "public_id", publicId,
-            "folder", folder,
-            "resource_type", "image",
-            "overwrite", true,
-            "transformation", new Object[]{
-                ObjectUtils.asMap("width", 500, "height", 500, "crop", "limit"),
-                ObjectUtils.asMap("quality", "auto"),
-                ObjectUtils.asMap("format", "auto")
-            }
-        );
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(), uploadParams);
+        Map<String, Object> uploadParams = ObjectUtils.asMap(
+                "public_id", publicId,
+                "folder", folder,
+                "resource_type", "image",
+                "overwrite", true,
+                "transformation",
+                new Transformation().width(500).height(500).crop("limit").quality("auto").fetchFormat("auto"));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(),
+                uploadParams);
         String secureUrl = (String) uploadResult.get("secure_url");
-        
+
         log.info("Image uploaded successfully to Cloudinary: {}", secureUrl);
         return secureUrl;
     }
@@ -71,29 +71,29 @@ public class CloudinaryFileService {
     /**
      * Uploads a PDF document to Cloudinary and returns the secure URL.
      * 
-     * @param file The PDF file to upload
+     * @param file   The PDF file to upload
      * @param folder The folder path in Cloudinary (e.g., "seekers/cv")
      * @return The secure URL of the uploaded document
      * @throws IllegalArgumentException if file validation fails
-     * @throws IOException if upload fails
+     * @throws IOException              if upload fails
      */
     public String uploadDocument(MultipartFile file, String folder) throws IOException {
         validateDocumentFile(file);
 
         String publicId = folder + "/" + UUID.randomUUID();
-        
-        @SuppressWarnings("unchecked")
-        Map<String, Object> uploadParams = ObjectUtils.asMap(
-            "public_id", publicId,
-            "folder", folder,
-            "resource_type", "raw",
-            "overwrite", true
-        );
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(), uploadParams);
+        Map<String, Object> uploadParams = ObjectUtils.asMap(
+                "public_id", publicId,
+                "folder", folder,
+                "resource_type", "raw",
+                "overwrite", true);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(),
+                uploadParams);
         String secureUrl = (String) uploadResult.get("secure_url");
-        
+
         log.info("Document uploaded successfully to Cloudinary: {}", secureUrl);
         return secureUrl;
     }
@@ -101,29 +101,29 @@ public class CloudinaryFileService {
     /**
      * Uploads a video to Cloudinary and returns the secure URL.
      * 
-     * @param file The video file to upload
+     * @param file   The video file to upload
      * @param folder The folder path in Cloudinary (e.g., "seekers/projects/videos")
      * @return The secure URL of the uploaded video
      * @throws IllegalArgumentException if file validation fails
-     * @throws IOException if upload fails
+     * @throws IOException              if upload fails
      */
     public String uploadVideo(MultipartFile file, String folder) throws IOException {
         validateVideoFile(file);
 
         String publicId = folder + "/" + UUID.randomUUID();
-        
-        @SuppressWarnings("unchecked")
-        Map<String, Object> uploadParams = ObjectUtils.asMap(
-            "public_id", publicId,
-            "folder", folder,
-            "resource_type", "video",
-            "overwrite", true
-        );
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(), uploadParams);
+        Map<String, Object> uploadParams = ObjectUtils.asMap(
+                "public_id", publicId,
+                "folder", folder,
+                "resource_type", "video",
+                "overwrite", true);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(),
+                uploadParams);
         String secureUrl = (String) uploadResult.get("secure_url");
-        
+
         log.info("Video uploaded successfully to Cloudinary: {}", secureUrl);
         return secureUrl;
     }
@@ -166,14 +166,12 @@ public class CloudinaryFileService {
         String contentType = file.getContentType();
         if (contentType == null || !isAllowedImageType(contentType)) {
             throw new IllegalArgumentException(
-                "Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP"
-            );
+                    "Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP");
         }
 
         if (file.getSize() > MAX_IMAGE_SIZE) {
             throw new IllegalArgumentException(
-                "File size exceeds maximum limit of 5MB"
-            );
+                    "File size exceeds maximum limit of 5MB");
         }
     }
 
@@ -191,14 +189,12 @@ public class CloudinaryFileService {
         String contentType = file.getContentType();
         if (contentType == null || !isAllowedDocumentType(contentType)) {
             throw new IllegalArgumentException(
-                "Invalid file type. Allowed type: PDF"
-            );
+                    "Invalid file type. Allowed type: PDF");
         }
 
         if (file.getSize() > MAX_DOCUMENT_SIZE) {
             throw new IllegalArgumentException(
-                "File size exceeds maximum limit of 10MB"
-            );
+                    "File size exceeds maximum limit of 10MB");
         }
     }
 
@@ -234,14 +230,12 @@ public class CloudinaryFileService {
         String contentType = file.getContentType();
         if (contentType == null || !isAllowedVideoType(contentType)) {
             throw new IllegalArgumentException(
-                "Invalid file type. Allowed types: MP4, MPEG, MOV, AVI, WEBM"
-            );
+                    "Invalid file type. Allowed types: MP4, MPEG, MOV, AVI, WEBM");
         }
 
         if (file.getSize() > MAX_VIDEO_SIZE) {
             throw new IllegalArgumentException(
-                "File size exceeds maximum limit of 100MB"
-            );
+                    "File size exceeds maximum limit of 100MB");
         }
     }
 
@@ -255,20 +249,24 @@ public class CloudinaryFileService {
     }
 
     private String extractPublicIdFromUrl(String url) {
-        if (url == null || url.isEmpty()) return null;
-        
+        if (url == null || url.isEmpty())
+            return null;
+
         try {
             int uploadIndex = url.indexOf("/upload/");
-            if (uploadIndex == -1) return null;
+            if (uploadIndex == -1)
+                return null;
 
             String path = url.substring(uploadIndex + "/upload/".length());
             String[] segments = path.split("/");
-            if (segments.length == 0) return null;
+            if (segments.length == 0)
+                return null;
 
             StringBuilder publicId = new StringBuilder();
             for (String segment : segments) {
                 if (!segment.matches("^v\\d+$") && !segment.contains("_") && !segment.contains(",")) {
-                    if (publicId.length() > 0) publicId.append("/");
+                    if (publicId.length() > 0)
+                        publicId.append("/");
                     String name = segment.contains(".") ? segment.substring(0, segment.lastIndexOf('.')) : segment;
                     publicId.append(name);
                 }
@@ -280,4 +278,3 @@ public class CloudinaryFileService {
         }
     }
 }
-

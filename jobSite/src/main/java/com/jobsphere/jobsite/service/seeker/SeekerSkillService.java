@@ -41,13 +41,14 @@ public class SeekerSkillService {
         User user = getAuthenticatedUser();
         validateSeekerUser(user);
         UUID seekerId = user.getId();
-        
+
         List<SeekerSkill> skills = seekerSkillRepository.findBySeekerId(seekerId);
-        
+
         return skills.stream()
                 .map(skill -> SkillDto.builder()
                         .id(skill.getId())
                         .skill(skill.getSkill())
+                        .proficiency(skill.getProficiency())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -57,22 +58,24 @@ public class SeekerSkillService {
         User user = getAuthenticatedUser();
         validateSeekerUser(user);
         UUID seekerId = user.getId();
-        
+
         // Check if skill already exists for this seeker
         if (seekerSkillRepository.findBySeekerIdAndSkill(seekerId, skillDto.getSkill()).isPresent()) {
             throw new IllegalArgumentException("Skill already exists");
         }
-        
+
         SeekerSkill seekerSkill = SeekerSkill.builder()
                 .seekerId(seekerId)
                 .skill(skillDto.getSkill())
+                .proficiency(skillDto.getProficiency())
                 .build();
-        
+
         SeekerSkill savedSkill = seekerSkillRepository.save(seekerSkill);
-        
+
         return SkillDto.builder()
                 .id(savedSkill.getId())
                 .skill(savedSkill.getSkill())
+                .proficiency(savedSkill.getProficiency())
                 .build();
     }
 
@@ -81,23 +84,26 @@ public class SeekerSkillService {
         User user = getAuthenticatedUser();
         validateSeekerUser(user);
         UUID seekerId = user.getId();
-        
+
         SeekerSkill seekerSkill = seekerSkillRepository.findByIdAndSeekerId(skillId, seekerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Skill not found"));
-        
-        // Check if another skill with the same name already exists (excluding current one)
-        Optional<SeekerSkill> existingSkill = seekerSkillRepository.findBySeekerIdAndSkill(seekerId, skillDto.getSkill());
+
+        // Check if another skill with the same name already exists (excluding current
+        // one)
+        Optional<SeekerSkill> existingSkill = seekerSkillRepository.findBySeekerIdAndSkill(seekerId,
+                skillDto.getSkill());
         if (existingSkill.isPresent() && !existingSkill.get().getId().equals(skillId)) {
             throw new IllegalArgumentException("Skill already exists");
         }
-        
+
         seekerSkill.setSkill(skillDto.getSkill());
+        seekerSkill.setProficiency(skillDto.getProficiency());
         SeekerSkill savedSkill = seekerSkillRepository.save(seekerSkill);
-        
+
         return SkillDto.builder()
                 .id(savedSkill.getId())
                 .skill(savedSkill.getSkill())
+                .proficiency(savedSkill.getProficiency())
                 .build();
     }
 }
-

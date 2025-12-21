@@ -19,5 +19,7 @@ public class SkillDto {
     @NotBlank
     @Size(max = 100)
     private String skill;
-}
 
+    @Size(max = 50)
+    private String proficiency; // BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+}

@@ -7,25 +7,28 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.UUID;
+
 @RestController
-@RequestMapping("/api/v1/seekers/profile/details")
+@RequestMapping("/api/v1/seekers/profile/details/sector")
 @RequiredArgsConstructor
 public class SectorController {
     private final SeekerSectorService seekerSectorService;
 
-    @GetMapping("/sector")
-    public ResponseEntity<SectorDto> getSector() {
-        return ResponseEntity.ok(seekerSectorService.getSector());
+    @GetMapping
+    public ResponseEntity<List<SectorDto>> getSectors() {
+        return ResponseEntity.ok(seekerSectorService.getSectors());
     }
 
-    @PostMapping("/sector")
-    public ResponseEntity<SectorDto> createSector(@Valid @RequestBody SectorDto sectorDto) {
-        return ResponseEntity.ok(seekerSectorService.createSector(sectorDto));
+    @PostMapping
+    public ResponseEntity<SectorDto> addSector(@Valid @RequestBody SectorDto sectorDto) {
+        return ResponseEntity.ok(seekerSectorService.addSector(sectorDto));
     }
 
-    @PutMapping("/sector")
-    public ResponseEntity<SectorDto> updateSector(@Valid @RequestBody SectorDto sectorDto) {
-        return ResponseEntity.ok(seekerSectorService.updateSector(sectorDto));
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteSector(@PathVariable UUID id) {
+        seekerSectorService.deleteSector(id);
+        return ResponseEntity.noContent().build();
     }
 }
-

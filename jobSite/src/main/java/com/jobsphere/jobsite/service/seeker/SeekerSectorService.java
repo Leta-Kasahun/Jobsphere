@@ -5,23 +5,22 @@ import com.jobsphere.jobsite.dto.seeker.SectorDto;
 import com.jobsphere.jobsite.exception.AuthException;
 import com.jobsphere.jobsite.exception.ResourceNotFoundException;
 import com.jobsphere.jobsite.model.User;
-import com.jobsphere.jobsite.model.seeker.Seeker;
 import com.jobsphere.jobsite.model.seeker.SeekerSector;
 import com.jobsphere.jobsite.repository.UserRepository;
-import com.jobsphere.jobsite.repository.seeker.SeekerRepository;
 import com.jobsphere.jobsite.repository.seeker.SeekerSectorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class SeekerSectorService {
     private final SeekerSectorRepository seekerSectorRepository;
-    private final SeekerRepository seekerRepository;
     private final UserRepository userRepository;
 
     private User getAuthenticatedUser() {
@@ -37,74 +36,58 @@ public class SeekerSectorService {
     }
 
     @Transactional(readOnly = true)
-    public SectorDto getSector() {
+    public List<SectorDto> getSectors() {
         User user = getAuthenticatedUser();
         validateSeekerUser(user);
         UUID seekerId = user.getId();
-        
-        SeekerSector seekerSector = seekerSectorRepository.findBySeekerId(seekerId)
-                .orElse(null);
-        
-        if (seekerSector == null) {
-            return SectorDto.builder().build();
-        }
-        
-        return SectorDto.builder()
-                .sector(seekerSector.getSector())
-                .build();
+
+        List<SeekerSector> sectors = seekerSectorRepository.findBySeekerId(seekerId);
+
+        return sectors.stream()
+                .map(s -> SectorDto.builder()
+                        .id(s.getSeekerId())
+                        .sector(s.getSector())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public SectorDto createSector(SectorDto sectorDto) {
+    public SectorDto addSector(SectorDto sectorDto) {
         User user = getAuthenticatedUser();
         validateSeekerUser(user);
         UUID seekerId = user.getId();
-        
-        if (seekerSectorRepository.findBySeekerId(seekerId).isPresent()) {
-            throw new AuthException("Sector already exists. Use PUT to update.");
+
+        // Check if sector already added for this seeker
+        if (seekerSectorRepository.findBySeekerIdAndSector(seekerId, sectorDto.getSector()).isPresent()) {
+            throw new IllegalArgumentException("Sector already added");
         }
-        
-        Seeker seeker = seekerRepository.findById(seekerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Seeker profile not found"));
-        
+
         SeekerSector seekerSector = SeekerSector.builder()
-                .seeker(seeker)
+                .seekerId(seekerId)
                 .sector(sectorDto.getSector())
                 .build();
-        
-        seekerSectorRepository.save(seekerSector);
-        
+
+        SeekerSector saved = seekerSectorRepository.save(seekerSector);
+
         return SectorDto.builder()
-                .sector(seekerSector.getSector())
+                .id(saved.getSeekerId())
+                .sector(saved.getSector())
                 .build();
     }
 
     @Transactional
-    public SectorDto updateSector(SectorDto sectorDto) {
+    public void deleteSector(UUID id) {
         User user = getAuthenticatedUser();
         validateSeekerUser(user);
         UUID seekerId = user.getId();
-        
-        Seeker seeker = seekerRepository.findById(seekerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Seeker profile not found"));
-        
-        SeekerSector seekerSector = seekerSectorRepository.findBySeekerId(seekerId)
-                .orElse(null);
-        
-        if (seekerSector == null) {
-            seekerSector = SeekerSector.builder()
-                    .seeker(seeker)
-                    .sector(sectorDto.getSector())
-                    .build();
-        } else {
-            seekerSector.setSector(sectorDto.getSector());
+
+        if (!id.equals(seekerId)) {
+            throw new ResourceNotFoundException("Sector not found");
         }
-        
-        seekerSectorRepository.save(seekerSector);
-        
-        return SectorDto.builder()
-                .sector(seekerSector.getSector())
-                .build();
+
+        SeekerSector sector = seekerSectorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sector not found"));
+
+        seekerSectorRepository.delete(sector);
     }
 }
-
