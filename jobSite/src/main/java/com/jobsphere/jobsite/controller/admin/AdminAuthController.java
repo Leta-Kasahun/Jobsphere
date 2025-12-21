@@ -31,7 +31,8 @@ public class AdminAuthController {
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody AdminOtpRequest request, HttpServletResponse response) {
+    public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody AdminOtpRequest request,
+            HttpServletResponse response) {
         Map<String, Object> result = adminAuthService.verifyOtp(request.getEmail(), request.getOtp());
         String accessToken = (String) result.get("token");
         String refreshToken = (String) result.get("refreshToken");
@@ -52,24 +53,36 @@ public class AdminAuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, Object>> resetPassword(@Valid @RequestBody AdminResetPasswordRequest request) {
         return ResponseEntity.ok(adminAuthService.resetPasswordWithToken(
-            request.getResetToken(), request.getNewPassword(), request.getConfirmPassword()));
+                request.getResetToken(), request.getNewPassword(), request.getConfirmPassword()));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = getCookieValue(request, "admin_refresh_token");
-        if (refreshToken != null) {
-            logoutService.logoutAdmin(response, refreshToken);
-        }
+        logoutService.logoutAdmin(response, refreshToken);
         return ResponseEntity.ok(Map.of("message", "Admin logged out", "timestamp", Instant.now()));
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<Map<String, Object>> refresh(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = getCookieValue(request, "admin_refresh_token");
+        if (refreshToken == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "No refresh token"));
+        }
+        Map<String, Object> result = adminAuthService.refreshAccessToken(refreshToken);
+        String newAccessToken = (String) result.get("accessToken");
+        String newRefreshToken = (String) result.get("refreshToken");
+        jwtCookieService.setAdminCookies(response, newAccessToken, newRefreshToken);
+        return ResponseEntity.ok(result);
+    }
+
     private String getCookieValue(HttpServletRequest request, String name) {
-        if (request.getCookies() == null) return null;
+        if (request.getCookies() == null)
+            return null;
         return Arrays.stream(request.getCookies())
-            .filter(cookie -> name.equals(cookie.getName()))
-            .map(Cookie::getValue)
-            .findFirst()
-            .orElse(null);
+                .filter(cookie -> name.equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 }

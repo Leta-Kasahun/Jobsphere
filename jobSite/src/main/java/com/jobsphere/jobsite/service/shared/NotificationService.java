@@ -22,10 +22,10 @@ public class NotificationService {
     @Value("${jobsphere.mail.from.name}")
     private String fromName;
 
-    public void sendVerificationCode(String toEmail, String verificationCode) {
+    public void sendVerificationCode(String toEmail, String companyName, String verificationCode) {
         try {
             String subject = "Your Company Verification Code - JobSphere";
-            String htmlContent = emailTemplateBuilder.buildVerificationCodeEmail(verificationCode);
+            String htmlContent = emailTemplateBuilder.buildVerificationCodeEmail(companyName, verificationCode);
 
             sendEmail(toEmail, subject, htmlContent);
             log.info("Verification code sent to {}", toEmail);

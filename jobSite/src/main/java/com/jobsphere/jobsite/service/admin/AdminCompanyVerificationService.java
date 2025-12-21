@@ -26,22 +26,35 @@ public class AdminCompanyVerificationService {
     private final CompanyVerificationService verificationService;
 
     public List<CompanyVerificationAdminResponse> getPendingVerifications() {
+        log.info("Fetching all pending company verifications...");
         List<CompanyVerification> verifications = verificationRepository.findByStatusOrderBySubmittedAtAsc("PENDING");
+        log.info("Found {} pending verifications in database", verifications.size());
 
         return verifications.stream()
-            .map(this::mapToAdminResponse)
-            .collect(Collectors.toList());
+                .map(this::mapToAdminResponseSilently)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private CompanyVerificationAdminResponse mapToAdminResponseSilently(CompanyVerification v) {
+        try {
+            return mapToAdminResponse(v);
+        } catch (Exception e) {
+            log.error("Failed to map verification {} for user {}: {}", v.getId(), v.getUserId(), e.getMessage());
+            return null;
+        }
     }
 
     public CompanyVerificationAdminResponse getVerificationById(UUID verificationId) {
         CompanyVerification verification = verificationRepository.findById(verificationId)
-            .orElseThrow(() -> new ResourceNotFoundException("Verification request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Verification request not found"));
 
         return mapToAdminResponse(verification);
     }
 
     @Transactional
-    public CompanyVerificationAdminResponse reviewVerification(UUID verificationId, CompanyVerificationReviewRequest request, String adminEmail) {
+    public CompanyVerificationAdminResponse reviewVerification(UUID verificationId,
+            CompanyVerificationReviewRequest request, String adminEmail) {
         if ("APPROVE".equals(request.action())) {
             verificationService.approveVerification(verificationId, adminEmail);
         } else if ("REJECT".equals(request.action())) {
@@ -64,25 +77,24 @@ public class AdminCompanyVerificationService {
         List<CompanyVerification> verifications = verificationRepository.findAll();
 
         return verifications.stream()
-            .map(this::mapToAdminResponse)
-            .collect(Collectors.toList());
+                .map(this::mapToAdminResponse)
+                .collect(Collectors.toList());
     }
 
     private CompanyVerificationAdminResponse mapToAdminResponse(CompanyVerification verification) {
         User user = userRepository.findById(verification.getUserId())
-            .orElseThrow(() -> new ResourceNotFoundException("User not found for verification"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found for verification"));
 
         return new CompanyVerificationAdminResponse(
-            verification.getId(),
-            verification.getUserId(),
-            user.getEmail(),
-            verification.getCompanyName(),
-            verification.getTradeLicenseUrl(),
-            verification.getTinNumber(),
-            verification.getWebsite(),
-            verification.getStatus(),
-            verification.getSubmittedAt(),
-            verification.getReviewedAt()
-        );
+                verification.getId(),
+                verification.getUserId(),
+                user.getEmail(),
+                verification.getCompanyName(),
+                verification.getTradeLicenseUrl(),
+                verification.getTinNumber(),
+                verification.getWebsite(),
+                verification.getStatus(),
+                verification.getSubmittedAt(),
+                verification.getReviewedAt());
     }
 }

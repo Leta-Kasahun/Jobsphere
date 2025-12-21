@@ -55,6 +55,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
+        String path = request.getRequestURI();
+        logger.debug(String.format("JWT_FILTER: Processing request to %s", path));
+
         String token = getTokenFromRequest(request);
 
         // If there is no token, continue (security will handle protected endpoints)
@@ -62,8 +65,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
             return;
         }
-
-        // If token invalid and it came from Authorization header -> return 401
         // immediately.
         String authHeader = request.getHeader("Authorization");
         boolean hasAuthHeader = authHeader != null && authHeader.startsWith("Bearer ");
@@ -80,20 +81,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String email = jwtTokenProvider.getSubject(token);
-        String userType = jwtTokenProvider.getUserType(token);
-
         if (email == null) {
             chain.doFilter(request, response);
-            return;
-        }
-
-        // Since it's a valid JWT, we want to use it regardless of any existing session
-        // authentication
-        // This ensures the principal is set correctly to the user's email from the JWT
-
-        String path = request.getRequestURI();
-        if (path.startsWith("/api/v1/admin/") && !"ADMIN".equals(userType)) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
@@ -103,7 +92,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     userDetails, null, userDetails.getAuthorities());
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
+
+            if (path.startsWith("/api/v1/admin/")) {
+                logger.info(String.format("AUTH_SUCCESS: Admin %s accessing %s with authorities %s",
+                        email, path, userDetails.getAuthorities()));
+            }
         } catch (Exception e) {
+            logger.error(String.format("AUTH_ERROR: Failed to load user %s - %s", email, e.getMessage()));
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
