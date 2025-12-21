@@ -7,7 +7,7 @@ import com.jobsphere.jobsite.model.User;
 import com.jobsphere.jobsite.model.employer.CompanyVerification;
 import com.jobsphere.jobsite.repository.UserRepository;
 import com.jobsphere.jobsite.repository.employer.CompanyVerificationRepository;
-import com.jobsphere.jobsite.service.shared.NotificationService;
+import com.jobsphere.jobsite.service.shared.EmailNotificationService;
 import com.jobsphere.jobsite.service.shared.VerificationCodeGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class CompanyVerificationService {
     private final CompanyVerificationRepository verificationRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
+    private final EmailNotificationService emailNotificationService;
     private final VerificationCodeGeneratorService verificationCodeGenerator;
 
     @Transactional
@@ -106,7 +106,7 @@ public class CompanyVerificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Send notification with code
-        notificationService.sendVerificationCode(user.getEmail(), verification.getCompanyName(), verificationCode);
+        emailNotificationService.sendVerificationCode(user.getEmail(), verificationCode);
 
         log.info("Verification approved for company {} by admin {}", verification.getCompanyName(), adminEmail);
     }
@@ -130,7 +130,7 @@ public class CompanyVerificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Send rejection notification
-        notificationService.sendVerificationRejection(user.getEmail(), verification.getCompanyName(), rejectionReason);
+        emailNotificationService.sendVerificationRejection(user.getEmail(), verification.getCompanyName(), rejectionReason);
 
         // Clean up trade license if needed (simplified)
 

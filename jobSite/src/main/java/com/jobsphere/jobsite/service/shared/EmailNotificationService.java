@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class NotificationService {
+public class EmailNotificationService {
     private final JavaMailSender mailSender;
     private final EmailTemplateBuilder emailTemplateBuilder;
 
@@ -58,6 +58,16 @@ public class NotificationService {
         } catch (Exception e) {
             log.error("Failed to send approval notification to {}", toEmail, e);
             throw new RuntimeException("Failed to send approval notification email");
+        }
+    }
+
+    public void sendCustomEmail(String toEmail, String subject, String htmlContent) {
+        try {
+            sendEmail(toEmail, subject, htmlContent);
+            log.info("Custom notification sent to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send custom notification to {}", toEmail, e);
+            throw new RuntimeException("Failed to send custom notification email");
         }
     }
 

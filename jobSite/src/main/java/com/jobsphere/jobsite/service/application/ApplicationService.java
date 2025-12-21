@@ -40,6 +40,7 @@ public class ApplicationService {
     private final SeekerSectorRepository sectorRepository;
     private final SeekerTagRepository tagRepository;
     private final AuthenticationService authenticationService;
+    private final NotificationService notificationService;
 
     @Transactional
     public ApplicationResponse applyForJob(ApplicationCreateRequest request) {
@@ -70,6 +71,8 @@ public class ApplicationService {
 
         application = applicationRepository.save(application);
         log.info("Application created: {} for job {} by seeker {}", application.getId(), job.getId(), seekerId);
+
+        notificationService.notifyNewApplication(job.getCompanyProfile().getUserId(), job.getTitle());
 
         return mapToResponse(application);
     }
@@ -133,6 +136,7 @@ public class ApplicationService {
             throw new IllegalStateException("You can only update applications for your own jobs");
         }
 
+        String oldStatus = application.getStatus();
         if (StringUtils.hasText(request.status())) {
             application.setStatus(request.status().toUpperCase());
             application.setReviewedAt(Instant.now());
@@ -157,6 +161,14 @@ public class ApplicationService {
 
         application = applicationRepository.save(application);
         log.info("Application updated: {} status: {}", applicationId, application.getStatus());
+
+        if (!oldStatus.equals(application.getStatus())) {
+            notificationService.notifyApplicationStatusUpdate(
+                application.getSeeker().getId(),
+                application.getJob().getTitle(),
+                application.getStatus()
+            );
+        }
 
         return mapToResponse(application);
     }
