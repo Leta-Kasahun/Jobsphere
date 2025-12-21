@@ -5,8 +5,6 @@ import com.jobsphere.jobsite.dto.employer.CompanyVerificationResponse;
 import com.jobsphere.jobsite.dto.employer.VerificationCodeRequest;
 import com.jobsphere.jobsite.service.employer.CompanyVerificationService;
 import com.jobsphere.jobsite.service.shared.AuthenticationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -20,13 +18,11 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/employer/verification")
 @RequiredArgsConstructor
-@Tag(name = "Employer Verification", description = "Company verification endpoints for employers")
 public class CompanyVerificationController {
     private final CompanyVerificationService verificationService;
     private final AuthenticationService authenticationService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Submit company verification request")
     public ResponseEntity<CompanyVerificationResponse> submitVerification(
             @RequestParam("companyName") String companyName,
             @RequestParam("tradeLicense") MultipartFile tradeLicense,
@@ -44,7 +40,6 @@ public class CompanyVerificationController {
     }
 
     @GetMapping("/status")
-    @Operation(summary = "Get verification status")
     public ResponseEntity<CompanyVerificationResponse> getVerificationStatus() {
         UUID userId = authenticationService.getCurrentUserId();
         CompanyVerificationResponse response = verificationService.getVerificationStatus(userId);
@@ -52,7 +47,6 @@ public class CompanyVerificationController {
     }
 
     @PostMapping("/verify-code")
-    @Operation(summary = "Verify company with code")
     public ResponseEntity<Map<String, Object>> verifyCode(@Valid @RequestBody VerificationCodeRequest request) {
         UUID userId = authenticationService.getCurrentUserId();
         boolean success = verificationService.verifyCode(userId, request.code());
