@@ -29,6 +29,8 @@ public record JobResponse(
     BigDecimal salaryMax,
     LocalDate deadline,
     Boolean isActive,
+    String status,
+    Integer filledCount,
     Instant createdAt,
     Instant updatedAt
 ) {}

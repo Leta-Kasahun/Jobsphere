@@ -152,8 +152,51 @@ public class JobService {
         }
 
         job.setIsActive(false);
+        job.setStatus("CLOSED");
         jobRepository.save(job);
         log.info("Job deactivated: {}", job.getId());
+    }
+
+    @Transactional
+    public JobResponse updateJobStatus(UUID jobId, String status) {
+        UUID userId = authenticationService.getCurrentUserId();
+        Job job = jobRepository.findById(jobId)
+            .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+
+        if (!job.getCompanyProfile().getUserId().equals(userId)) {
+            throw new IllegalStateException("You can only update your own jobs");
+        }
+
+        validateStatusTransition(job.getStatus(), status);
+
+        job.setStatus(status);
+        job = jobRepository.save(job);
+        log.info("Job status updated: {} to {}", job.getId(), status);
+
+        return mapToResponse(job);
+    }
+
+    private void validateStatusTransition(String currentStatus, String newStatus) {
+        switch (currentStatus) {
+            case "OPEN":
+                if (!"CLOSED".equals(newStatus)) {
+                    throw new IllegalStateException("OPEN jobs can only be changed to CLOSED");
+                }
+                break;
+            case "CLOSED":
+                if (!"OPEN".equals(newStatus)) {
+                    throw new IllegalStateException("CLOSED jobs can only be changed to OPEN");
+                }
+                break;
+            case "HIRED":
+                throw new IllegalStateException("HIRED jobs cannot have their status manually changed");
+            default:
+                throw new IllegalStateException("Invalid current status: " + currentStatus);
+        }
+
+        if (!"OPEN".equals(newStatus) && !"CLOSED".equals(newStatus)) {
+            throw new IllegalStateException("Status must be either OPEN or CLOSED");
+        }
     }
 
     private JobResponse mapToResponse(Job job) {
@@ -181,6 +224,8 @@ public class JobService {
             job.getSalaryMax(),
             job.getDeadline(),
             job.getIsActive(),
+            job.getStatus(),
+            job.getFilledCount(),
             job.getCreatedAt(),
             job.getUpdatedAt()
         );

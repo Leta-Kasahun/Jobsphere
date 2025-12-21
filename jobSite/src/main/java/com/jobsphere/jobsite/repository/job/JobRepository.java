@@ -19,6 +19,7 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
     Page<Job> findByIsActiveTrue(Pageable pageable);
 
     @Query("SELECT j FROM Job j WHERE j.isActive = true " +
+           "AND j.status IN ('OPEN', 'HIRED') " +
            "AND (:category IS NULL OR j.category = :category) " +
            "AND (:jobType IS NULL OR j.jobType = :jobType) " +
            "AND (:workplaceType IS NULL OR j.workplaceType = :workplaceType) " +
@@ -31,6 +32,6 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
         Pageable pageable
     );
 
-    @Query("SELECT j FROM Job j JOIN FETCH j.companyProfile cp WHERE j.id = :jobId AND j.isActive = true")
+    @Query("SELECT j FROM Job j JOIN FETCH j.companyProfile cp WHERE j.id = :jobId AND j.isActive = true AND j.status IN ('OPEN', 'HIRED')")
     Job findActiveJobWithCompanyProfile(@Param("jobId") UUID jobId);
 }
