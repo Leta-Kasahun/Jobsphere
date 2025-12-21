@@ -12,3 +12,6 @@ public interface CompanyProfileRepository extends JpaRepository<CompanyProfile, 
     Optional<CompanyProfile> findByUserId(UUID userId);
     boolean existsByUserId(UUID userId);
 }
+
+
+

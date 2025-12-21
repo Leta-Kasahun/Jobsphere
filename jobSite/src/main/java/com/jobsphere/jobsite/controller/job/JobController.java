@@ -4,7 +4,6 @@ import com.jobsphere.jobsite.dto.job.JobCreateRequest;
 import com.jobsphere.jobsite.dto.job.JobResponse;
 import com.jobsphere.jobsite.dto.job.JobUpdateRequest;
 import com.jobsphere.jobsite.service.job.JobService;
-import com.jobsphere.jobsite.service.shared.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,7 +20,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JobController {
     private final JobService jobService;
-    private final AuthenticationService authenticationService;
 
     @PostMapping
     public ResponseEntity<JobResponse> createJob(@Valid @RequestBody JobCreateRequest request) {
@@ -59,4 +57,15 @@ public class JobController {
         jobService.deactivateJob(jobId);
         return ResponseEntity.ok(Map.of("message", "Job deactivated successfully"));
     }
+
+    @PutMapping("/{jobId}/status")
+    public ResponseEntity<JobResponse> updateJobStatus(
+            @PathVariable UUID jobId,
+            @RequestParam String status) {
+        JobResponse response = jobService.updateJobStatus(jobId, status);
+        return ResponseEntity.ok(response);
+    }
 }
+
+
+

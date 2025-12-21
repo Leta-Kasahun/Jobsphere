@@ -77,6 +77,14 @@ public class Job {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private String status = "OPEN";
+
+    @Column(name = "filled_count")
+    @Builder.Default
+    private Integer filledCount = 0;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

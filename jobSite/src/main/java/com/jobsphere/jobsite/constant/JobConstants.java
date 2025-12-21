@@ -22,3 +22,6 @@ public final class JobConstants {
     public static final int ADDRESS_SUB_CITY_MAX_LENGTH = 100;
     public static final int ADDRESS_STREET_MAX_LENGTH = 255;
 }
+
+
+
