@@ -31,7 +31,8 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody OtpRequest request, HttpServletResponse response) {
+    public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody OtpRequest request,
+            HttpServletResponse response) {
         OtpType type = request.getType() == null ? OtpType.EMAIL_VERIFICATION : request.getType();
         Map<String, Object> result = authService.verifyOtp(request.getEmail(), request.getOtp(), type);
         if (type == OtpType.EMAIL_VERIFICATION && result.get("token") != null) {
@@ -39,7 +40,7 @@ public class AuthController {
             String refreshToken = (String) result.get("refreshToken");
             jwtCookieService.setUserCookies(response, accessToken, refreshToken);
         }
-        
+
         return ResponseEntity.ok(result);
     }
 
@@ -73,9 +74,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = getCookieValue(request, "refresh_token");
-        if (refreshToken != null) {
-            logoutService.logoutUser(response, refreshToken);
-        }
+        logoutService.logoutUser(response, refreshToken);
         return ResponseEntity.ok(Map.of("message", "Logged out", "timestamp", Instant.now()));
     }
 

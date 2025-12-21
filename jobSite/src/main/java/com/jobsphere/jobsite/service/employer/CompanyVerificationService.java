@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -33,11 +32,11 @@ public class CompanyVerificationService {
     @Transactional
     public CompanyVerificationResponse submitVerification(UUID userId, CompanyVerificationRequest request) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check if user already has a pending or approved verification
         if (verificationRepository.existsByUserIdAndStatus(userId, "PENDING") ||
-            verificationRepository.existsByUserIdAndStatus(userId, "APPROVED")) {
+                verificationRepository.existsByUserIdAndStatus(userId, "APPROVED")) {
             throw new IllegalStateException("You already have a pending or approved verification request");
         }
 
@@ -50,15 +49,15 @@ public class CompanyVerificationService {
         }
 
         CompanyVerification verification = CompanyVerification.builder()
-            .userId(userId)
-            .companyName(request.companyName())
-            .tradeLicenseUrl(tradeLicenseUrl)
-            .tinNumber(request.tinNumber())
-            .website(request.website())
-            .status("PENDING")
-            .submittedAt(Instant.now())
-            .codeUsed(false)
-            .build();
+                .userId(userId)
+                .companyName(request.companyName())
+                .tradeLicenseUrl(tradeLicenseUrl)
+                .tinNumber(request.tinNumber())
+                .website(request.website())
+                .status("PENDING")
+                .submittedAt(Instant.now())
+                .codeUsed(false)
+                .build();
 
         verification = verificationRepository.save(verification);
 
@@ -68,7 +67,7 @@ public class CompanyVerificationService {
 
     public CompanyVerificationResponse getVerificationStatus(UUID userId) {
         CompanyVerification verification = verificationRepository.findByUserId(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("No verification request found"));
+                .orElseThrow(() -> new ResourceNotFoundException("No verification request found"));
 
         return mapToResponse(verification);
     }
@@ -76,8 +75,8 @@ public class CompanyVerificationService {
     @Transactional
     public boolean verifyCode(UUID userId, String code) {
         CompanyVerification verification = verificationRepository
-            .findByUserIdAndStatus(userId, "APPROVED")
-            .orElseThrow(() -> new ResourceNotFoundException("No approved verification found"));
+                .findByUserIdAndStatus(userId, "APPROVED")
+                .orElseThrow(() -> new ResourceNotFoundException("No approved verification found"));
 
         if (verification.getCodeUsed()) {
             throw new IllegalStateException("Verification code has already been used");
@@ -97,7 +96,7 @@ public class CompanyVerificationService {
     @Transactional
     public void approveVerification(UUID verificationId, String adminEmail) {
         CompanyVerification verification = verificationRepository.findById(verificationId)
-            .orElseThrow(() -> new ResourceNotFoundException("Verification request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Verification request not found"));
 
         if (!"PENDING".equals(verification.getStatus())) {
             throw new IllegalStateException("Verification is not in pending status");
@@ -113,10 +112,10 @@ public class CompanyVerificationService {
 
         // Get user email
         User user = userRepository.findById(verification.getUserId())
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Send notification with code
-        notificationService.sendVerificationCode(user.getEmail(), verificationCode);
+        notificationService.sendVerificationCode(user.getEmail(), verification.getCompanyName(), verificationCode);
 
         log.info("Verification approved for company {} by admin {}", verification.getCompanyName(), adminEmail);
     }
@@ -124,19 +123,20 @@ public class CompanyVerificationService {
     @Transactional
     public void rejectVerification(UUID verificationId, String rejectionReason, String adminEmail) {
         CompanyVerification verification = verificationRepository.findById(verificationId)
-            .orElseThrow(() -> new ResourceNotFoundException("Verification request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Verification request not found"));
 
         if (!"PENDING".equals(verification.getStatus())) {
             throw new IllegalStateException("Verification is not in pending status");
         }
 
         verification.setStatus("BANNED");
+        verification.setRejectionReason(rejectionReason);
         verification.setReviewedAt(Instant.now());
         verificationRepository.save(verification);
 
         // Get user email
         User user = userRepository.findById(verification.getUserId())
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Send rejection notification
         notificationService.sendVerificationRejection(user.getEmail(), verification.getCompanyName(), rejectionReason);
@@ -154,7 +154,7 @@ public class CompanyVerificationService {
     @Transactional
     public void deleteVerification(UUID verificationId) {
         CompanyVerification verification = verificationRepository.findById(verificationId)
-            .orElseThrow(() -> new ResourceNotFoundException("Verification request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Verification request not found"));
 
         // Delete from Cloudinary if not approved
         if (!"APPROVED".equals(verification.getStatus())) {
@@ -171,14 +171,15 @@ public class CompanyVerificationService {
 
     private CompanyVerificationResponse mapToResponse(CompanyVerification verification) {
         return new CompanyVerificationResponse(
-            verification.getId(),
-            verification.getCompanyName(),
-            verification.getTradeLicenseUrl(),
-            verification.getTinNumber(),
-            verification.getWebsite(),
-            verification.getStatus(),
-            verification.getSubmittedAt(),
-            verification.getReviewedAt()
-        );
+                verification.getId(),
+                verification.getCompanyName(),
+                verification.getTradeLicenseUrl(),
+                verification.getTinNumber(),
+                verification.getWebsite(),
+                verification.getStatus(),
+                verification.getCodeUsed(),
+                verification.getRejectionReason(),
+                verification.getSubmittedAt(),
+                verification.getReviewedAt());
     }
 }

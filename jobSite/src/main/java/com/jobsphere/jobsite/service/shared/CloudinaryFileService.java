@@ -86,7 +86,7 @@ public class CloudinaryFileService {
         Map<String, Object> uploadParams = ObjectUtils.asMap(
                 "public_id", publicId,
                 "folder", folder,
-                "resource_type", "raw",
+                "resource_type", "auto",
                 "overwrite", true);
 
         @SuppressWarnings("unchecked")

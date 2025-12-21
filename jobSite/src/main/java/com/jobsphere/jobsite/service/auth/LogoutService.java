@@ -12,19 +12,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class LogoutService {
     private final JwtCookieService jwtCookieService;
     private final RefreshTokenRepository refreshTokenRepository;
-    
+
     @Transactional
     public void logoutUser(HttpServletResponse response, String refreshTokenHash) {
-        refreshTokenRepository.findByTokenHash(refreshTokenHash)
-            .ifPresent(token -> token.setRevoked(true));
+        if (refreshTokenHash != null) {
+            refreshTokenRepository.findByTokenHash(refreshTokenHash)
+                    .ifPresent(token -> token.setRevoked(true));
+        }
         jwtCookieService.clearUserCookies(response);
     }
-    
+
     @Transactional
     public void logoutAdmin(HttpServletResponse response, String refreshTokenHash) {
-        refreshTokenRepository.findByTokenHash(refreshTokenHash)
-            .ifPresent(token -> token.setRevoked(true));
+        if (refreshTokenHash != null) {
+            refreshTokenRepository.findByTokenHash(refreshTokenHash)
+                    .ifPresent(token -> token.setRevoked(true));
+        }
         jwtCookieService.clearAdminCookies(response);
     }
 }
-

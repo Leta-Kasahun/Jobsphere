@@ -48,6 +48,9 @@ public class CompanyVerification {
     @Builder.Default
     private Boolean codeUsed = false;
 
+    @Column(name = "rejection_reason", length = 500)
+    private String rejectionReason;
+
     @Column(name = "submitted_at", nullable = false, updatable = false)
     private Instant submittedAt;
 
