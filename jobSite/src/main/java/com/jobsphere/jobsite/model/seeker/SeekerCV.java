@@ -45,7 +45,7 @@ public class SeekerCV {
     @Column(name = "title", length = 255)
     private String title;
 
-    @Column(name = "about", length = 100)
+    @Column(name = "about", length = 2000)
     private String about;
 
     @JdbcTypeCode(SqlTypes.JSON)

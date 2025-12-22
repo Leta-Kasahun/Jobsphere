@@ -7,9 +7,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -18,6 +20,14 @@ import java.util.UUID;
 @Tag(name = "CV Templates", description = "Admin API for managing CV templates")
 public class CVTemplateController {
     private final CVTemplateService cvTemplateService;
+
+    @GetMapping
+    @Operation(summary = "Get all CV templates (Admin only)")
+    public ResponseEntity<List<CVTemplateResponse>> getAllTemplates() {
+        List<CVTemplateResponse> templates = cvTemplateService.getAllTemplates(Pageable.unpaged())
+                .getContent();
+        return ResponseEntity.ok(templates);
+    }
 
     @PostMapping
     @Operation(summary = "Create a new CV template (Admin only)")
