@@ -34,6 +34,12 @@ public class CompanyProfileController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{profileId}")
+    public ResponseEntity<CompanyProfileResponse> getProfileById(@PathVariable UUID profileId) {
+        CompanyProfileResponse response = profileService.getProfileById(profileId);
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/me")
     public ResponseEntity<CompanyProfileResponse> updateProfile(
             @Valid @RequestBody CompanyProfileUpdateRequest request) {

@@ -22,6 +22,9 @@ public class CVDto {
     @Size(max = 100)
     private String about;
 
+    private String cvUrl;
+    private String fileName;
+    private String fileSize;
+
     private Map<String, Object> details;
 }
-

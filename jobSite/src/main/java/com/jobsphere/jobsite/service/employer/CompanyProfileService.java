@@ -88,9 +88,8 @@ public class CompanyProfileService {
         return mapToResponse(profile);
     }
 
+    @Transactional(readOnly = true)
     public CompanyProfileResponse getProfile(UUID userId) {
-        validateVerificationAccess(userId);
-
         return profileRepository.findByUserId(userId)
                 .map(this::mapToResponse)
                 .orElseGet(() -> {
@@ -110,6 +109,13 @@ public class CompanyProfileService {
                             null,
                             null);
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public CompanyProfileResponse getProfileById(UUID profileId) {
+        return profileRepository.findById(profileId)
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Company profile not found"));
     }
 
     @Transactional

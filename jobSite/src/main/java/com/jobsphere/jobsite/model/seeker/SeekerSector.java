@@ -19,6 +19,10 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 public class SeekerSector {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id")
+    private UUID id;
+
     @Column(name = "seeker_id", nullable = false)
     private UUID seekerId;
 

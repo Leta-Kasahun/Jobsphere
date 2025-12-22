@@ -1,18 +1,17 @@
 package com.jobsphere.jobsite.service.seeker;
 
 import com.jobsphere.jobsite.constant.UserType;
-import com.jobsphere.jobsite.dto.seeker.BasicInfoRequest;
-import com.jobsphere.jobsite.dto.seeker.BasicInfoResponse;
-import com.jobsphere.jobsite.exception.AuthException;
-import com.jobsphere.jobsite.exception.ResourceNotFoundException;
-import com.jobsphere.jobsite.model.seeker.Seeker;
+import com.jobsphere.jobsite.dto.seeker.*;
+import com.jobsphere.jobsite.model.seeker.*;
 import com.jobsphere.jobsite.model.User;
 import com.jobsphere.jobsite.dto.shared.AddressDto;
 import com.jobsphere.jobsite.model.shared.Address;
-import com.jobsphere.jobsite.repository.seeker.SeekerRepository;
+import com.jobsphere.jobsite.repository.seeker.*;
 import com.jobsphere.jobsite.repository.UserRepository;
 import com.jobsphere.jobsite.repository.shared.AddressRepository;
 import com.jobsphere.jobsite.service.shared.CloudinaryImageService;
+import com.jobsphere.jobsite.exception.AuthException;
+import com.jobsphere.jobsite.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,13 @@ public class SeekerService {
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final CloudinaryImageService cloudinaryImageService;
+    private final SeekerBioRepository seekerBioRepository;
+    private final SeekerSkillRepository seekerSkillRepository;
+    private final SeekerProjectRepository seekerProjectRepository;
+    private final SeekerSectorRepository seekerSectorRepository;
+    private final SeekerTagRepository seekerTagRepository;
+    private final SeekerSocialLinkRepository seekerSocialLinkRepository;
+    private final SeekerCVRepository seekerCVRepository;
 
     private User getAuthenticatedUser() {
         org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext()
@@ -123,6 +131,66 @@ public class SeekerService {
         }
 
         return mapToResponse(seeker, user);
+    }
+
+    @Transactional(readOnly = true)
+    public FullProfileResponse getFullProfileById(UUID seekerId) {
+        Seeker seeker = seekerRepository.findById(seekerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seeker profile not found"));
+        User user = userRepository.findById(seekerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        BasicInfoResponse basicInfo = mapToResponse(seeker, user);
+
+        BioDto bio = seekerBioRepository.findBySeekerId(seekerId)
+                .map(b -> BioDto.builder().title(b.getTitle()).bio(b.getBio()).build())
+                .orElse(BioDto.builder().build());
+
+        List<SkillDto> skills = seekerSkillRepository.findBySeekerId(seekerId).stream()
+                .map(s -> SkillDto.builder().id(s.getId()).skill(s.getSkill()).proficiency(s.getProficiency()).build())
+                .collect(Collectors.toList());
+
+        List<ProjectDto> projects = seekerProjectRepository.findBySeekerId(seekerId).stream()
+                .map(p -> ProjectDto.builder()
+                        .id(p.getId())
+                        .title(p.getTitle())
+                        .description(p.getDescription())
+                        .projectUrl(p.getProjectUrl())
+                        .imageUrl(p.getImageUrl())
+                        .imageUrls(p.getImages() != null ? p.getImages().stream().map(SeekerProjectImage::getImageUrl)
+                                .collect(Collectors.toList()) : List.of())
+                        .videoUrl(p.getVideoUrl())
+                        .videoType(p.getVideoType())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<SectorDto> sectors = seekerSectorRepository.findBySeekerId(seekerId).stream()
+                .map(s -> SectorDto.builder().id(s.getId()).sector(s.getSector()).build())
+                .collect(Collectors.toList());
+
+        List<TagDto> tags = seekerTagRepository.findBySeekerId(seekerId).stream()
+                .map(t -> TagDto.builder().tag(t.getTag()).build())
+                .collect(Collectors.toList());
+
+        List<SocialLinkDto> socialLinks = seekerSocialLinkRepository.findBySeekerId(seekerId).stream()
+                .map(s -> SocialLinkDto.builder().platform(s.getPlatform()).url(s.getUrl()).build())
+                .collect(Collectors.toList());
+
+        CVDto cv = seekerCVRepository.findBySeekerId(seekerId)
+                .map(c -> CVDto.builder().cvUrl(c.getCvUrl()).fileName(c.getFileName()).fileSize(c.getFileSize())
+                        .build())
+                .orElse(null);
+
+        return FullProfileResponse.builder()
+                .basicInfo(basicInfo)
+                .bio(bio)
+                .skills(skills)
+                .projects(projects)
+                .sectors(sectors)
+                .tags(tags)
+                .socialLinks(socialLinks)
+                .cv(cv)
+                .build();
     }
 
     @Transactional

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/seekers/profile")
@@ -58,5 +59,11 @@ public class SeekerProfileController {
     @DeleteMapping("/address")
     public ResponseEntity<BasicInfoResponse> deleteAddress() {
         return ResponseEntity.ok(seekerService.deleteAddress());
+    }
+
+    @GetMapping("/{seekerId}")
+    public ResponseEntity<com.jobsphere.jobsite.dto.seeker.FullProfileResponse> getFullProfile(
+            @PathVariable UUID seekerId) {
+        return ResponseEntity.ok(seekerService.getFullProfileById(seekerId));
     }
 }

@@ -197,31 +197,62 @@ public class ApplicationService {
     }
 
     private ApplicationResponse mapToResponse(Application application) {
-        Seeker seeker = application.getSeeker();
-        List<String> skills = skillRepository.findBySeekerId(seeker.getId())
-                .stream().map(SeekerSkill::getSkill).toList();
-        List<String> sectors = sectorRepository.findBySeekerId(seeker.getId())
-                .stream().map(SeekerSector::getSector).toList();
-        List<String> tags = tagRepository.findBySeekerId(seeker.getId())
-                .stream().map(SeekerTag::getTag).toList();
+        try {
+            Seeker seeker = application.getSeeker();
+            if (seeker == null) {
+                log.error("Application {} has no associated seeker!", application.getId());
+                return null; // Or throw exception, but returning null might break page map
+            }
 
-        return new ApplicationResponse(
-                application.getId(),
-                application.getJob().getId(),
-                application.getJob().getTitle(),
-                seeker.getId(),
-                seeker.getFirstName() + " " + seeker.getLastName(),
-                seeker.getCvUrl(),
-                skills,
-                sectors,
-                tags,
-                application.getCoverLetter(),
-                application.getExpectedSalary(),
-                application.getStatus(),
-                application.getAppliedAt(),
-                application.getReviewedAt(),
-                application.getHiredFlag(),
-                application.getNotes(),
-                application.getUpdatedAt());
+            List<String> skills;
+            try {
+                skills = skillRepository.findBySeekerId(seeker.getId())
+                        .stream().map(SeekerSkill::getSkill).toList();
+            } catch (Exception e) {
+                log.error("Error fetching skills for seeker {}", seeker.getId(), e);
+                skills = List.of();
+            }
+
+            List<String> sectors;
+            try {
+                sectors = sectorRepository.findBySeekerId(seeker.getId())
+                        .stream().map(SeekerSector::getSector).toList();
+            } catch (Exception e) {
+                log.error("Error fetching sectors for seeker {}", seeker.getId(), e);
+                sectors = List.of();
+            }
+
+            List<String> tags;
+            try {
+                tags = tagRepository.findBySeekerId(seeker.getId())
+                        .stream().map(SeekerTag::getTag).toList();
+            } catch (Exception e) {
+                log.error("Error fetching tags for seeker {}", seeker.getId(), e);
+                tags = List.of();
+            }
+
+            return new ApplicationResponse(
+                    application.getId(),
+                    application.getJob().getId(),
+                    application.getJob().getTitle(),
+                    seeker.getId(),
+                    (seeker.getFirstName() != null ? seeker.getFirstName() : "") + " "
+                            + (seeker.getLastName() != null ? seeker.getLastName() : ""),
+                    seeker.getCvUrl(),
+                    skills,
+                    sectors,
+                    tags,
+                    application.getCoverLetter(),
+                    application.getExpectedSalary(),
+                    application.getStatus(),
+                    application.getAppliedAt(),
+                    application.getReviewedAt(),
+                    application.getHiredFlag(),
+                    application.getNotes(),
+                    application.getUpdatedAt());
+        } catch (Exception e) {
+            log.error("Error mapping application {} to response", application.getId(), e);
+            throw e;
+        }
     }
 }

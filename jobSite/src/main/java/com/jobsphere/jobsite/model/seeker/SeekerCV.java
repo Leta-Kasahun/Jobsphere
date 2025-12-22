@@ -33,6 +33,15 @@ public class SeekerCV {
     @JoinColumn(name = "seeker_id", referencedColumnName = "id", insertable = false, updatable = false)
     private Seeker seeker;
 
+    @Column(name = "cv_url")
+    private String cvUrl;
+
+    @Column(name = "file_name")
+    private String fileName;
+
+    @Column(name = "file_size")
+    private String fileSize;
+
     @Column(name = "title", length = 255)
     private String title;
 
@@ -51,4 +60,3 @@ public class SeekerCV {
     @Column(name = "updated_at")
     private Instant updatedAt;
 }
-

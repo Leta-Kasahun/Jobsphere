@@ -16,7 +16,8 @@ import java.util.UUID;
 @Repository
 public interface ApplicationRepository extends JpaRepository<Application, UUID> {
 
-    Page<Application> findByJobId(UUID jobId, Pageable pageable);
+    @Query("SELECT a FROM Application a JOIN FETCH a.seeker WHERE a.job.id = :jobId")
+    Page<Application> findByJobId(@Param("jobId") UUID jobId, Pageable pageable);
 
     Page<Application> findBySeekerId(UUID seekerId, Pageable pageable);
 
