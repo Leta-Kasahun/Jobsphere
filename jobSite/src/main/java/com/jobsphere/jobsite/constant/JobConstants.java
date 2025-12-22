@@ -25,3 +25,7 @@ public final class JobConstants {
     public static final int COMPENSATION_TYPE_MAX_LENGTH = 50;
     public static final int CURRENCY_MAX_LENGTH = 10;
 }
+
+
+
+

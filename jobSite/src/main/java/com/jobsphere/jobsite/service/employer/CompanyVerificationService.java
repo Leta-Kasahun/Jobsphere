@@ -105,7 +105,6 @@ public class CompanyVerificationService {
         User user = userRepository.findById(verification.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Send notification with code
         emailNotificationService.sendVerificationCode(user.getEmail(), verification.getCompanyName(), verificationCode);
 
         log.info("Verification approved for company {} by admin {}", verification.getCompanyName(), adminEmail);
