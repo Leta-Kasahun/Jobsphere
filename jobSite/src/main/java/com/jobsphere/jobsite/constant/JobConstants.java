@@ -1,7 +1,8 @@
 package com.jobsphere.jobsite.constant;
 
 public final class JobConstants {
-    private JobConstants() {}
+    private JobConstants() {
+    }
 
     public static final int TITLE_MAX_LENGTH = 255;
     public static final int DESCRIPTION_MAX_LENGTH = 10000;
@@ -21,6 +22,8 @@ public final class JobConstants {
     public static final int ADDRESS_CITY_MAX_LENGTH = 100;
     public static final int ADDRESS_SUB_CITY_MAX_LENGTH = 100;
     public static final int ADDRESS_STREET_MAX_LENGTH = 255;
+    public static final int COMPENSATION_TYPE_MAX_LENGTH = 50;
+    public static final int CURRENCY_MAX_LENGTH = 10;
 }
 
 

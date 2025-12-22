@@ -62,11 +62,12 @@ public class EmailNotificationService {
     }
 
     public void sendCustomEmail(String toEmail, String subject, String htmlContent) {
+        log.info("Preparing to send custom email to: {} with subject: {}", toEmail, subject);
         try {
             sendEmail(toEmail, subject, htmlContent);
-            log.info("Custom notification sent to {}", toEmail);
+            log.info("Custom notification email successfully sent to {}", toEmail);
         } catch (Exception e) {
-            log.error("Failed to send custom notification to {}", toEmail, e);
+            log.error("CRITICAL: Failed to send custom notification to {}. Subject: {}", toEmail, subject, e);
             throw new RuntimeException("Failed to send custom notification email");
         }
     }
@@ -83,6 +84,3 @@ public class EmailNotificationService {
         mailSender.send(message);
     }
 }
-
-
-

@@ -20,7 +20,8 @@ public class CompanyProfileController {
     private final AuthenticationService authenticationService;
 
     @PostMapping
-    public ResponseEntity<CompanyProfileResponse> createProfile(@Valid @RequestBody CompanyProfileCreateRequest request) {
+    public ResponseEntity<CompanyProfileResponse> createProfile(
+            @Valid @RequestBody CompanyProfileCreateRequest request) {
         UUID userId = authenticationService.getCurrentUserId();
         CompanyProfileResponse response = profileService.createProfile(userId, request);
         return ResponseEntity.ok(response);
@@ -34,9 +35,18 @@ public class CompanyProfileController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<CompanyProfileResponse> updateProfile(@Valid @RequestBody CompanyProfileUpdateRequest request) {
+    public ResponseEntity<CompanyProfileResponse> updateProfile(
+            @Valid @RequestBody CompanyProfileUpdateRequest request) {
         UUID userId = authenticationService.getCurrentUserId();
         CompanyProfileResponse response = profileService.updateProfile(userId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/me/logo", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CompanyProfileResponse> uploadLogo(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        UUID userId = authenticationService.getCurrentUserId();
+        CompanyProfileResponse response = profileService.uploadLogo(userId, file);
         return ResponseEntity.ok(response);
     }
 }

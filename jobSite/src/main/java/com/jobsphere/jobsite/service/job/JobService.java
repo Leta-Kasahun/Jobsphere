@@ -10,6 +10,7 @@ import com.jobsphere.jobsite.model.shared.Address;
 import com.jobsphere.jobsite.repository.employer.CompanyProfileRepository;
 import com.jobsphere.jobsite.repository.job.JobRepository;
 import com.jobsphere.jobsite.repository.shared.AddressRepository;
+import com.jobsphere.jobsite.repository.application.ApplicationRepository;
 import com.jobsphere.jobsite.service.shared.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -29,37 +31,50 @@ public class JobService {
     private final CompanyProfileRepository companyProfileRepository;
     private final AddressRepository addressRepository;
     private final AuthenticationService authenticationService;
+    private final ApplicationRepository applicationRepository;
 
     @Transactional
     public JobResponse createJob(JobCreateRequest request) {
         UUID userId = authenticationService.getCurrentUserId();
+        log.info("Creating job for user: {} with title: {}", userId, request.title());
+
         CompanyProfile companyProfile = companyProfileRepository.findByUserId(userId)
-            .orElseThrow(() -> new IllegalStateException("Company profile not found"));
+                .orElseThrow(() -> new IllegalStateException(
+                        "Company profile matching user not found. Please complete your company profile first."));
 
         Address address = null;
         if (request.addressId() != null) {
             address = addressRepository.findById(request.addressId())
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+        } else if (request.country() != null) {
+            address = Address.builder()
+                    .country(request.country())
+                    .region(request.region())
+                    .createdAt(Instant.now())
+                    .build();
+            address = addressRepository.save(address);
         }
 
         Job job = Job.builder()
-            .companyProfile(companyProfile)
-            .address(address)
-            .title(request.title())
-            .description(request.description())
-            .jobType(request.jobType())
-            .workplaceType(request.workplaceType())
-            .category(request.category())
-            .educationLevel(request.educationLevel())
-            .genderRequirement(request.genderRequirement())
-            .vacancyCount(request.vacancyCount())
-            .experienceLevel(request.experienceLevel())
-            .experienceDescription(request.experienceDescription())
-            .salaryMin(request.salaryMin())
-            .salaryMax(request.salaryMax())
-            .deadline(request.deadline())
-            .isActive(true)
-            .build();
+                .companyProfile(companyProfile)
+                .address(address)
+                .title(request.title())
+                .description(request.description())
+                .jobType(request.jobType())
+                .workplaceType(request.workplaceType())
+                .category(request.category())
+                .educationLevel(request.educationLevel())
+                .genderRequirement(request.genderRequirement())
+                .vacancyCount(request.vacancyCount())
+                .experienceLevel(request.experienceLevel())
+                .experienceDescription(request.experienceDescription())
+                .salaryMin(request.salaryMin())
+                .salaryMax(request.salaryMax())
+                .compensationType(request.compensationType())
+                .currency(request.currency())
+                .deadline(request.deadline())
+                .isActive(true)
+                .build();
 
         job = jobRepository.save(job);
         log.info("Job created: {} for company {}", job.getId(), companyProfile.getCompanyName());
@@ -67,11 +82,27 @@ public class JobService {
         return mapToResponse(job);
     }
 
-    public Page<JobResponse> listJobs(String category, String jobType, String workplaceType, String city, Pageable pageable) {
-        Page<Job> jobs = jobRepository.findActiveJobsWithFilters(category, jobType, workplaceType, city, pageable);
+    @Transactional(readOnly = true)
+    public Page<JobResponse> getEmployerJobs(Pageable pageable) {
+        UUID userId = authenticationService.getCurrentUserId();
+        CompanyProfile companyProfile = companyProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Company profile not found"));
+
+        return jobRepository.findByCompanyProfileId(companyProfile.getId(), pageable)
+                .map(this::mapToResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<JobResponse> listJobs(String category, String jobType, String workplaceType, String location,
+            Pageable pageable) {
+        log.info("Fetching jobs with filters - category: {}, type: {}, workplace: {}, location: {}",
+                category, jobType, workplaceType, location);
+        Page<Job> jobs = jobRepository.findActiveJobsWithFilters(category, jobType, workplaceType, location, pageable);
+        log.info("Found {} jobs", jobs.getTotalElements());
         return jobs.map(this::mapToResponse);
     }
 
+    @Transactional(readOnly = true)
     public JobResponse getJob(UUID jobId) {
         Job job = jobRepository.findActiveJobWithCompanyProfile(jobId);
         if (job == null) {
@@ -84,7 +115,7 @@ public class JobService {
     public JobResponse updateJob(UUID jobId, JobUpdateRequest request) {
         UUID userId = authenticationService.getCurrentUserId();
         Job job = jobRepository.findById(jobId)
-            .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
         if (!job.getCompanyProfile().getUserId().equals(userId)) {
             throw new IllegalStateException("You can only update your own jobs");
@@ -126,12 +157,18 @@ public class JobService {
         if (request.salaryMax() != null) {
             job.setSalaryMax(request.salaryMax());
         }
+        if (StringUtils.hasText(request.compensationType())) {
+            job.setCompensationType(request.compensationType());
+        }
+        if (StringUtils.hasText(request.currency())) {
+            job.setCurrency(request.currency());
+        }
         if (request.deadline() != null) {
             job.setDeadline(request.deadline());
         }
         if (request.addressId() != null) {
             Address address = addressRepository.findById(request.addressId())
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
             job.setAddress(address);
         }
 
@@ -145,7 +182,7 @@ public class JobService {
     public void deactivateJob(UUID jobId) {
         UUID userId = authenticationService.getCurrentUserId();
         Job job = jobRepository.findById(jobId)
-            .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
         if (!job.getCompanyProfile().getUserId().equals(userId)) {
             throw new IllegalStateException("You can only deactivate your own jobs");
@@ -161,7 +198,7 @@ public class JobService {
     public JobResponse updateJobStatus(UUID jobId, String status) {
         UUID userId = authenticationService.getCurrentUserId();
         Job job = jobRepository.findById(jobId)
-            .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
         if (!job.getCompanyProfile().getUserId().equals(userId)) {
             throw new IllegalStateException("You can only update your own jobs");
@@ -199,35 +236,39 @@ public class JobService {
         }
     }
 
-    private JobResponse mapToResponse(Job job) {
+    public JobResponse mapToResponse(Job job) {
+        long applicantCount = applicationRepository.countByJobId(job.getId());
         return new JobResponse(
-            job.getId(),
-            job.getCompanyProfile().getId(),
-            job.getCompanyProfile().getCompanyName(),
-            job.getAddress() != null ? job.getAddress().getId() : null,
-            job.getAddress() != null ? job.getAddress().getCountry() : null,
-            job.getAddress() != null ? job.getAddress().getRegion() : null,
-            job.getAddress() != null ? job.getAddress().getCity() : null,
-            job.getAddress() != null ? job.getAddress().getSubCity() : null,
-            job.getAddress() != null ? job.getAddress().getStreet() : null,
-            job.getTitle(),
-            job.getDescription(),
-            job.getJobType(),
-            job.getWorkplaceType(),
-            job.getCategory(),
-            job.getEducationLevel(),
-            job.getGenderRequirement(),
-            job.getVacancyCount(),
-            job.getExperienceLevel(),
-            job.getExperienceDescription(),
-            job.getSalaryMin(),
-            job.getSalaryMax(),
-            job.getDeadline(),
-            job.getIsActive(),
-            job.getStatus(),
-            job.getFilledCount(),
-            job.getCreatedAt(),
-            job.getUpdatedAt()
-        );
+                job.getId(),
+                job.getCompanyProfile().getId(),
+                job.getCompanyProfile().getCompanyName(),
+                job.getCompanyProfile().getLogoUrl(),
+                job.getAddress() != null ? job.getAddress().getId() : null,
+                job.getAddress() != null ? job.getAddress().getCountry() : null,
+                job.getAddress() != null ? job.getAddress().getRegion() : null,
+                job.getAddress() != null ? job.getAddress().getCity() : null,
+                job.getAddress() != null ? job.getAddress().getSubCity() : null,
+                job.getAddress() != null ? job.getAddress().getStreet() : null,
+                job.getTitle(),
+                job.getDescription(),
+                job.getJobType(),
+                job.getWorkplaceType(),
+                job.getCategory(),
+                job.getEducationLevel(),
+                job.getGenderRequirement(),
+                job.getVacancyCount(),
+                job.getExperienceLevel(),
+                job.getExperienceDescription(),
+                job.getSalaryMin(),
+                job.getSalaryMax(),
+                job.getCompensationType(),
+                job.getCurrency(),
+                job.getDeadline(),
+                job.getIsActive(),
+                job.getStatus(),
+                job.getFilledCount(),
+                (int) applicantCount,
+                job.getCreatedAt(),
+                job.getUpdatedAt());
     }
 }

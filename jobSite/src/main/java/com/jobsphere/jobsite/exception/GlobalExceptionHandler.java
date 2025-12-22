@@ -63,6 +63,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(body);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalStateException(IllegalStateException ex) {
+        log.warn("Illegal state: {}", ex.getMessage());
+        Map<String, Object> body = createErrorBody("illegal_state", ex.getMessage(), HttpStatus.CONFLICT);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
     @ExceptionHandler(java.io.IOException.class)
     public ResponseEntity<Map<String, Object>> handleIOException(java.io.IOException ex) {
         log.error("IO error occurred", ex);

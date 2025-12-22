@@ -23,6 +23,39 @@ import java.util.UUID;
 public class CompanyProfileService {
     private final CompanyProfileRepository profileRepository;
     private final CompanyVerificationRepository verificationRepository;
+    private final com.jobsphere.jobsite.service.shared.CloudinaryImageService cloudinaryImageService;
+
+    @Transactional
+    public CompanyProfileResponse uploadLogo(UUID userId, org.springframework.web.multipart.MultipartFile file)
+            throws IOException {
+        validateVerificationAccess(userId);
+
+        CompanyProfile profile = profileRepository.findByUserId(userId)
+                .orElseGet(() -> {
+                    CompanyVerification verification = verificationRepository.findByUserIdAndStatus(userId, "APPROVED")
+                            .orElseThrow(() -> new IllegalStateException("No approved company verification found"));
+
+                    return CompanyProfile.builder()
+                            .userId(userId)
+                            .companyName(verification.getCompanyName())
+                            .website(verification.getWebsite())
+                            .description("") // Required by not-null constraint
+                            .build();
+                });
+
+        // Delete old logo if exists
+        if (StringUtils.hasText(profile.getLogoUrl())) {
+            cloudinaryImageService.deleteImage(profile.getLogoUrl());
+        }
+
+        String logoUrl = cloudinaryImageService.uploadImage(file, "companies/logos");
+        profile.setLogoUrl(logoUrl);
+
+        profile = profileRepository.save(profile);
+        log.info("Company logo uploaded for user {}", userId);
+
+        return mapToResponse(profile);
+    }
 
     @Transactional
     public CompanyProfileResponse createProfile(UUID userId, CompanyProfileCreateRequest request) {
@@ -33,21 +66,21 @@ public class CompanyProfileService {
         }
 
         CompanyVerification verification = verificationRepository.findByUserIdAndStatus(userId, "APPROVED")
-            .orElseThrow(() -> new IllegalStateException("No approved company verification found"));
+                .orElseThrow(() -> new IllegalStateException("No approved company verification found"));
 
         String logoUrl = request.logo();
 
         CompanyProfile profile = CompanyProfile.builder()
-            .userId(userId)
-            .companyName(verification.getCompanyName())
-            .description(request.description())
-            .logoUrl(logoUrl)
-            .website(verification.getWebsite())
-            .location(request.location())
-            .industry(request.industry())
-            .legalStatus(request.legalStatus())
-            .socialLinks(request.socialLinks())
-            .build();
+                .userId(userId)
+                .companyName(verification.getCompanyName())
+                .description(request.description())
+                .logoUrl(logoUrl)
+                .website(verification.getWebsite())
+                .location(request.location())
+                .industry(request.industry())
+                .legalStatus(request.legalStatus())
+                .socialLinks(request.socialLinks())
+                .build();
 
         profile = profileRepository.save(profile);
         log.info("Company profile created for user {}", userId);
@@ -58,10 +91,25 @@ public class CompanyProfileService {
     public CompanyProfileResponse getProfile(UUID userId) {
         validateVerificationAccess(userId);
 
-        CompanyProfile profile = profileRepository.findByUserId(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("Company profile not found"));
+        return profileRepository.findByUserId(userId)
+                .map(this::mapToResponse)
+                .orElseGet(() -> {
+                    CompanyVerification verification = verificationRepository.findByUserIdAndStatus(userId, "APPROVED")
+                            .orElseThrow(() -> new IllegalStateException("No approved company verification found"));
 
-        return mapToResponse(profile);
+                    return new CompanyProfileResponse(
+                            null,
+                            verification.getCompanyName(),
+                            null,
+                            null,
+                            verification.getWebsite(),
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null);
+                });
     }
 
     @Transactional
@@ -69,7 +117,7 @@ public class CompanyProfileService {
         validateVerificationAccess(userId);
 
         CompanyProfile profile = profileRepository.findByUserId(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("Company profile not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Company profile not found"));
 
         if (StringUtils.hasText(request.description())) {
             profile.setDescription(request.description());
@@ -99,7 +147,7 @@ public class CompanyProfileService {
 
     private void validateVerificationAccess(UUID userId) {
         CompanyVerification verification = verificationRepository.findByUserIdAndStatus(userId, "APPROVED")
-            .orElseThrow(() -> new IllegalStateException("No approved company verification found"));
+                .orElseThrow(() -> new IllegalStateException("No approved company verification found"));
 
         if (!Boolean.TRUE.equals(verification.getCodeUsed())) {
             throw new IllegalStateException("Company verification code must be used before accessing profile");
@@ -108,17 +156,16 @@ public class CompanyProfileService {
 
     private CompanyProfileResponse mapToResponse(CompanyProfile profile) {
         return new CompanyProfileResponse(
-            profile.getId(),
-            profile.getCompanyName(),
-            profile.getDescription(),
-            profile.getLogoUrl(),
-            profile.getWebsite(),
-            profile.getLocation(),
-            profile.getIndustry(),
-            profile.getLegalStatus(),
-            profile.getSocialLinks(),
-            profile.getCreatedAt(),
-            profile.getUpdatedAt()
-        );
+                profile.getId(),
+                profile.getCompanyName(),
+                profile.getDescription(),
+                profile.getLogoUrl(),
+                profile.getWebsite(),
+                profile.getLocation(),
+                profile.getIndustry(),
+                profile.getLegalStatus(),
+                profile.getSocialLinks(),
+                profile.getCreatedAt(),
+                profile.getUpdatedAt());
     }
 }

@@ -62,4 +62,11 @@ public class ApplicationController {
         ApplicationResponse response = applicationService.updateApplicationStatus(applicationId, request);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/check")
+    @Operation(summary = "Check if already applied")
+    public ResponseEntity<Boolean> hasApplied(@RequestParam UUID jobId) {
+        boolean applied = applicationService.hasApplied(jobId);
+        return ResponseEntity.ok(applied);
+    }
 }

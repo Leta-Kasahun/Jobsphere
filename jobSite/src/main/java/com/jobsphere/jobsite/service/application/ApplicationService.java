@@ -10,8 +10,14 @@ import com.jobsphere.jobsite.model.seeker.Seeker;
 import com.jobsphere.jobsite.repository.application.ApplicationRepository;
 import com.jobsphere.jobsite.repository.job.JobRepository;
 import com.jobsphere.jobsite.repository.seeker.SeekerRepository;
-import com.jobsphere.jobsite.service.notification.NotificationService;
+import com.jobsphere.jobsite.repository.seeker.SeekerSectorRepository;
+import com.jobsphere.jobsite.repository.seeker.SeekerSkillRepository;
+import com.jobsphere.jobsite.repository.seeker.SeekerTagRepository;
+import com.jobsphere.jobsite.model.seeker.SeekerSkill;
+import com.jobsphere.jobsite.model.seeker.SeekerSector;
+import com.jobsphere.jobsite.model.seeker.SeekerTag;
 import com.jobsphere.jobsite.service.shared.AuthenticationService;
+import com.jobsphere.jobsite.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,6 +28,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +37,9 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final JobRepository jobRepository;
     private final SeekerRepository seekerRepository;
+    private final SeekerSkillRepository skillRepository;
+    private final SeekerSectorRepository sectorRepository;
+    private final SeekerTagRepository tagRepository;
     private final AuthenticationService authenticationService;
     private final NotificationService notificationService;
 
@@ -47,18 +57,18 @@ public class ApplicationService {
         }
 
         Seeker seeker = seekerRepository.findById(seekerId)
-            .orElseThrow(() -> new ResourceNotFoundException("Seeker profile not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Seeker profile not found"));
 
         if (applicationRepository.existsByJobIdAndSeekerId(request.jobId(), seekerId)) {
             throw new IllegalStateException("You have already applied for this job");
         }
 
         Application application = Application.builder()
-            .job(job)
-            .seeker(seeker)
-            .coverLetter(request.coverLetter())
-            .expectedSalary(request.expectedSalary())
-            .build();
+                .job(job)
+                .seeker(seeker)
+                .coverLetter(request.coverLetter())
+                .expectedSalary(request.expectedSalary())
+                .build();
 
         application = applicationRepository.save(application);
         log.info("Application created: {} for job {} by seeker {}", application.getId(), job.getId(), seekerId);
@@ -68,10 +78,11 @@ public class ApplicationService {
         return mapToResponse(application);
     }
 
+    @Transactional(readOnly = true)
     public Page<ApplicationResponse> getApplicationsByJob(UUID jobId, Pageable pageable) {
         UUID userId = authenticationService.getCurrentUserId();
         Job job = jobRepository.findById(jobId)
-            .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
         if (!job.getCompanyProfile().getUserId().equals(userId)) {
             throw new IllegalStateException("You can only view applications for your own jobs");
@@ -81,15 +92,19 @@ public class ApplicationService {
         return applications.map(this::mapToResponse);
     }
 
+    @Transactional(readOnly = true)
     public Page<ApplicationResponse> getMyApplications(Pageable pageable) {
         UUID seekerId = authenticationService.getCurrentUserId();
+        log.info("Fetching applications for seekerId: {}", seekerId);
         Page<Application> applications = applicationRepository.findBySeekerId(seekerId, pageable);
+        log.info("Found {} applications for seekerId: {}", applications.getTotalElements(), seekerId);
         return applications.map(this::mapToResponse);
     }
 
+    @Transactional(readOnly = true)
     public ApplicationResponse getApplication(UUID applicationId) {
         Application application = applicationRepository.findById(applicationId)
-            .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
         UUID userId = authenticationService.getCurrentUserId();
         boolean isSeeker = application.getSeeker().getId().equals(userId);
@@ -102,11 +117,21 @@ public class ApplicationService {
         return mapToResponse(application);
     }
 
+    @Transactional(readOnly = true)
+    public boolean hasApplied(UUID jobId) {
+        try {
+            UUID seekerId = authenticationService.getCurrentUserId();
+            return applicationRepository.existsByJobIdAndSeekerId(jobId, seekerId);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     @Transactional
     public ApplicationResponse updateApplicationStatus(UUID applicationId, ApplicationUpdateRequest request) {
         UUID userId = authenticationService.getCurrentUserId();
         Application application = applicationRepository.findById(applicationId)
-            .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
         if (!application.getJob().getCompanyProfile().getUserId().equals(userId)) {
             throw new IllegalStateException("You can only update applications for your own jobs");
@@ -140,10 +165,9 @@ public class ApplicationService {
 
         if (!oldStatus.equals(application.getStatus())) {
             notificationService.notifyApplicationStatusUpdate(
-                application.getSeeker().getId(),
-                application.getJob().getTitle(),
-                application.getStatus()
-            );
+                    application.getSeeker().getId(),
+                    application.getJob().getTitle(),
+                    application.getStatus());
         }
 
         return mapToResponse(application);
@@ -151,7 +175,7 @@ public class ApplicationService {
 
     private void updateJobFilledCount(UUID jobId, int delta) {
         Job job = jobRepository.findById(jobId)
-            .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
         int newFilledCount = (job.getFilledCount() != null ? job.getFilledCount() : 0) + delta;
         newFilledCount = Math.max(0, newFilledCount);
@@ -173,20 +197,31 @@ public class ApplicationService {
     }
 
     private ApplicationResponse mapToResponse(Application application) {
+        Seeker seeker = application.getSeeker();
+        List<String> skills = skillRepository.findBySeekerId(seeker.getId())
+                .stream().map(SeekerSkill::getSkill).toList();
+        List<String> sectors = sectorRepository.findBySeekerId(seeker.getId())
+                .stream().map(SeekerSector::getSector).toList();
+        List<String> tags = tagRepository.findBySeekerId(seeker.getId())
+                .stream().map(SeekerTag::getTag).toList();
+
         return new ApplicationResponse(
-            application.getId(),
-            application.getJob().getId(),
-            application.getJob().getTitle(),
-            application.getSeeker().getId(),
-            application.getSeeker().getFirstName() + " " + application.getSeeker().getLastName(),
-            application.getCoverLetter(),
-            application.getExpectedSalary(),
-            application.getStatus(),
-            application.getAppliedAt(),
-            application.getReviewedAt(),
-            application.getHiredFlag(),
-            application.getNotes(),
-            application.getUpdatedAt()
-        );
+                application.getId(),
+                application.getJob().getId(),
+                application.getJob().getTitle(),
+                seeker.getId(),
+                seeker.getFirstName() + " " + seeker.getLastName(),
+                seeker.getCvUrl(),
+                skills,
+                sectors,
+                tags,
+                application.getCoverLetter(),
+                application.getExpectedSalary(),
+                application.getStatus(),
+                application.getAppliedAt(),
+                application.getReviewedAt(),
+                application.getHiredFlag(),
+                application.getNotes(),
+                application.getUpdatedAt());
     }
 }

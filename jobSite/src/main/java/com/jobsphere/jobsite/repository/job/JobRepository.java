@@ -14,24 +14,25 @@ import java.util.UUID;
 @Repository
 public interface JobRepository extends JpaRepository<Job, UUID> {
 
-    List<Job> findByCompanyProfileIdAndIsActiveTrue(UUID companyProfileId);
+        List<Job> findByCompanyProfileIdAndIsActiveTrue(UUID companyProfileId);
 
-    Page<Job> findByIsActiveTrue(Pageable pageable);
+        Page<Job> findByCompanyProfileId(UUID companyProfileId, Pageable pageable);
 
-    @Query("SELECT j FROM Job j WHERE j.isActive = true " +
-           "AND j.status IN ('OPEN', 'HIRED') " +
-           "AND (:category IS NULL OR j.category = :category) " +
-           "AND (:jobType IS NULL OR j.jobType = :jobType) " +
-           "AND (:workplaceType IS NULL OR j.workplaceType = :workplaceType) " +
-           "AND (:city IS NULL OR j.address.city = :city)")
-    Page<Job> findActiveJobsWithFilters(
-        @Param("category") String category,
-        @Param("jobType") String jobType,
-        @Param("workplaceType") String workplaceType,
-        @Param("city") String city,
-        Pageable pageable
-    );
+        Page<Job> findByIsActiveTrue(Pageable pageable);
 
-    @Query("SELECT j FROM Job j JOIN FETCH j.companyProfile cp WHERE j.id = :jobId AND j.isActive = true AND j.status IN ('OPEN', 'HIRED')")
-    Job findActiveJobWithCompanyProfile(@Param("jobId") UUID jobId);
+        @Query("SELECT j FROM Job j JOIN FETCH j.companyProfile cp LEFT JOIN j.address a WHERE j.isActive = true " +
+                        "AND j.status IN ('OPEN', 'HIRED') " +
+                        "AND (:category IS NULL OR :category = '' OR j.category = :category) " +
+                        "AND (:jobType IS NULL OR :jobType = '' OR j.jobType = :jobType) " +
+                        "AND (:workplaceType IS NULL OR :workplaceType = '' OR j.workplaceType = :workplaceType) " +
+                        "AND (:location IS NULL OR :location = '' OR UPPER(a.city) = UPPER(:location) OR UPPER(a.region) = UPPER(:location))")
+        Page<Job> findActiveJobsWithFilters(
+                        @Param("category") String category,
+                        @Param("jobType") String jobType,
+                        @Param("workplaceType") String workplaceType,
+                        @Param("location") String location,
+                        Pageable pageable);
+
+        @Query("SELECT j FROM Job j JOIN FETCH j.companyProfile cp WHERE j.id = :jobId AND j.isActive = true AND j.status IN ('OPEN', 'HIRED')")
+        Job findActiveJobWithCompanyProfile(@Param("jobId") UUID jobId);
 }

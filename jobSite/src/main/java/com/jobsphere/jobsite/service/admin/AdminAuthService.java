@@ -62,7 +62,7 @@ public class AdminAuthService {
         admin.setLastLoginAt(Instant.now());
         adminRepository.save(admin);
 
-        String accessToken = jwtTokenProvider.createAdminToken(email);
+        String accessToken = jwtTokenProvider.createAdminToken(email, admin.getId());
         String refreshToken = createAdminRefreshToken(email);
 
         return Map.of(
@@ -145,7 +145,7 @@ public class AdminAuthService {
                 .orElseThrow(() -> new AuthException("Admin not found"));
 
         return Map.of(
-                "accessToken", jwtTokenProvider.createAdminToken(email),
+                "accessToken", jwtTokenProvider.createAdminToken(email, admin.getId()),
                 "refreshToken", createAdminRefreshToken(email),
                 "email", email,
                 "role", "ADMIN");

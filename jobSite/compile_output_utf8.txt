@@ -1,0 +1,42 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.jobsphere:jobsite >------------------------
+[INFO] Building jobsite 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ jobsite ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 38 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ jobsite ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 155 source files with javac [debug parameters release 21] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/Hp/Desktop/HireNestBackend/Jobsphere/jobSite/src/main/java/com/jobsphere/jobsite/service/employer/CompanyVerificationService.java:[109,33] method sendVerificationCode in class com.jobsphere.jobsite.service.shared.EmailNotificationService cannot be applied to given types;
+  required: java.lang.String,java.lang.String,java.lang.String
+  found:    java.lang.String,java.lang.String
+  reason: actual and formal argument lists differ in length
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  13.065 s
+[INFO] Finished at: 2025-12-22T00:52:03+03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:compile (default-compile) on project jobsite: Compilation failure
+[ERROR] /C:/Users/Hp/Desktop/HireNestBackend/Jobsphere/jobSite/src/main/java/com/jobsphere/jobsite/service/employer/CompanyVerificationService.java:[109,33] method sendVerificationCode in class com.jobsphere.jobsite.service.shared.EmailNotificationService cannot be applied to given types;
+[ERROR]   required: java.lang.String,java.lang.String,java.lang.String
+[ERROR]   found:    java.lang.String,java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] 
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

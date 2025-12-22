@@ -11,26 +11,28 @@ import java.util.Map;
 public class JwtTokenProvider {
     private final JwtUtils jwtUtils;
 
-    public String createUserToken(String email, String userType) {
-        return jwtUtils.generateToken(email, Map.of("userType", userType), null);
+    public String createUserToken(String email, String userType, java.util.UUID userId) {
+        return jwtUtils.generateToken(email, Map.of(
+                "userType", userType,
+                "userId", userId.toString()), null);
     }
 
-    public String createAdminToken(String email) {
-        return jwtUtils.generateToken(email, Map.of("userType", "ADMIN"), null);
+    public String createAdminToken(String email, java.util.UUID userId) {
+        return jwtUtils.generateToken(email, Map.of(
+                "userType", "ADMIN",
+                "userId", userId.toString()), null);
     }
 
     public String createOtpToken(String email, String userType) {
         Map<String, Object> claims = userType != null ? Map.of(
-            "userType", userType,
-            "purpose", "OTP_VERIFICATION"
-        ) : Map.of("purpose", "OTP_VERIFICATION");
+                "userType", userType,
+                "purpose", "OTP_VERIFICATION") : Map.of("purpose", "OTP_VERIFICATION");
         return jwtUtils.generateToken(email, claims, 5 * 60 * 1000L);
     }
 
     public String createPasswordResetToken(String email) {
         return jwtUtils.generateToken(email, Map.of(
-            "purpose", "PASSWORD_RESET"
-        ), 15 * 60 * 1000L);
+                "purpose", "PASSWORD_RESET"), 15 * 60 * 1000L);
     }
 
     // Generic token creator

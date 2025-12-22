@@ -50,7 +50,7 @@ public class GoogleAuthService {
         user.setLastLogin(Instant.now());
         userRepository.save(user);
 
-        String token = jwtTokenProvider.createUserToken(email, user.getUserType().name());
+        String token = jwtTokenProvider.createUserToken(email, user.getUserType().name(), user.getId());
 
         return Map.of(
                 "token", token,
@@ -92,7 +92,7 @@ public class GoogleAuthService {
             oauthRepository.save(oauthAccount);
         }
 
-        String token = jwtTokenProvider.createUserToken(email, userType.name());
+        String token = jwtTokenProvider.createUserToken(email, userType.name(), user.getId());
 
         return Map.of(
                 "token", token,

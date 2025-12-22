@@ -37,7 +37,7 @@ public class Job {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "job_type", nullable = false, length = 50)
@@ -61,7 +61,7 @@ public class Job {
     @Column(name = "experience_level", length = 100)
     private String experienceLevel;
 
-    @Column(name = "experience_description")
+    @Column(name = "experience_description", columnDefinition = "TEXT")
     private String experienceDescription;
 
     @Column(name = "salary_min", precision = 15, scale = 2)
@@ -69,6 +69,12 @@ public class Job {
 
     @Column(name = "salary_max", precision = 15, scale = 2)
     private BigDecimal salaryMax;
+
+    @Column(name = "compensation_type", length = 50)
+    private String compensationType;
+
+    @Column(name = "currency", length = 10)
+    private String currency;
 
     @Column
     private LocalDate deadline;

@@ -64,7 +64,7 @@ public class AuthService {
                     "tempToken", tempToken);
         }
 
-        String accessToken = jwtTokenProvider.createUserToken(email, user.getUserType().name());
+        String accessToken = jwtTokenProvider.createUserToken(email, user.getUserType().name(), user.getId());
         String refreshToken = createRefreshToken(email);
 
         return Map.of("token", accessToken, "refreshToken", refreshToken, "email", email, "userType",
@@ -90,7 +90,7 @@ public class AuthService {
 
         // Safely handle null userType
         String userTypeName = user.getUserType() != null ? user.getUserType().name() : "UNKNOWN";
-        return Map.of("token", jwtTokenProvider.createUserToken(email, userTypeName),
+        return Map.of("token", jwtTokenProvider.createUserToken(email, userTypeName, user.getId()),
                 "email", email, "userType", userTypeName);
     }
 
@@ -147,7 +147,7 @@ public class AuthService {
         User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new AuthException("User not found"));
 
         String userTypeName = user.getUserType() != null ? user.getUserType().name() : "UNKNOWN";
-        return Map.of("accessToken", jwtTokenProvider.createUserToken(email, userTypeName),
+        return Map.of("accessToken", jwtTokenProvider.createUserToken(email, userTypeName, user.getId()),
                 "refreshToken", createRefreshToken(email), "email", email, "userType", userTypeName);
     }
 
@@ -166,7 +166,7 @@ public class AuthService {
         user.setUserType(userType);
         userRepository.save(user);
 
-        String accessToken = jwtTokenProvider.createUserToken(email, userType.name());
+        String accessToken = jwtTokenProvider.createUserToken(email, userType.name(), user.getId());
         String refreshToken = createRefreshToken(email);
 
         return Map.of("token", accessToken, "refreshToken", refreshToken, "email", email, "userType", userType);

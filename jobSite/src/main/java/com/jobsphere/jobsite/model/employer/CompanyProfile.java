@@ -28,7 +28,7 @@ public class CompanyProfile {
     @Column(name = "company_name", nullable = false, length = 255)
     private String companyName;
 
-    @Column(name = "description", nullable = false)
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "logo_url")
@@ -37,16 +37,16 @@ public class CompanyProfile {
     @Column(name = "website", length = 255)
     private String website;
 
-    @Column(name = "location", length = 255)
+    @Column(name = "location", columnDefinition = "TEXT")
     private String location;
 
-    @Column(name = "industry", length = 255)
+    @Column(name = "industry", columnDefinition = "TEXT")
     private String industry;
 
-    @Column(name = "legal_status", length = 50)
+    @Column(name = "legal_status", length = 255)
     private String legalStatus;
 
-    @Column(name = "social_links")
+    @Column(name = "social_links", columnDefinition = "TEXT")
     private String socialLinks;
 
     @CreatedDate

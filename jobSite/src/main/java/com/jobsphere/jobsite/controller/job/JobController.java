@@ -38,6 +38,13 @@ public class JobController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/my-jobs")
+    public ResponseEntity<Page<JobResponse>> getMyJobs(
+            @PageableDefault(size = 20) Pageable pageable) {
+        Page<JobResponse> response = jobService.getEmployerJobs(pageable);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{jobId}")
     public ResponseEntity<JobResponse> getJob(@PathVariable UUID jobId) {
         JobResponse response = jobService.getJob(jobId);
@@ -66,6 +73,3 @@ public class JobController {
         return ResponseEntity.ok(response);
     }
 }
-
-
-
