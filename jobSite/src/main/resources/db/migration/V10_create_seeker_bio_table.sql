@@ -5,6 +5,5 @@ CREATE TABLE seeker_bio (
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
-
 CREATE INDEX idx_seeker_bio_seeker ON seeker_bio(seeker_id);
 
