@@ -4,6 +4,7 @@ import com.jobsphere.jobsite.model.User;
 import com.jobsphere.jobsite.constant.UserType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.List;
@@ -21,4 +22,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByGoogleId(String googleId);
 
     List<User> findByUserType(UserType userType);
+
+    long countByCreatedAtBetween(Instant start, Instant end);
+
+    long countByUserType(UserType userType);
 }

@@ -7,8 +7,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,4 +31,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT p FROM Payment p WHERE p.user = :user AND p.status = 'SUCCESS' ORDER BY p.paidAt DESC")
     List<Payment> findSuccessfulPaymentsByUser(User user);
+
+    @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status IN ('SUCCESS', 'VERIFIED')")
+    BigDecimal sumTotalRevenue();
+
+    @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status IN ('SUCCESS', 'VERIFIED') AND p.createdAt BETWEEN :start AND :end")
+    BigDecimal sumRevenueBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
