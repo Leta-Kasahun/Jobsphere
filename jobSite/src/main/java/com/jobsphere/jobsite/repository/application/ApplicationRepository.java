@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,4 +47,15 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     int updateHiredFlag(@Param("applicationId") UUID applicationId, @Param("hiredFlag") boolean hiredFlag);
 
     boolean existsByJobIdAndSeekerId(UUID jobId, UUID seekerId);
+
+    @Query("SELECT COUNT(a) FROM Application a JOIN a.job j WHERE j.companyProfile.id = :companyProfileId")
+    long countByCompanyProfileId(@Param("companyProfileId") UUID companyProfileId);
+
+    @Query("SELECT COUNT(a) FROM Application a JOIN a.job j WHERE j.companyProfile.id = :companyProfileId AND a.status = :status")
+    long countByCompanyProfileIdAndStatus(@Param("companyProfileId") UUID companyProfileId,
+            @Param("status") String status);
+
+    @Query("SELECT COUNT(a) FROM Application a JOIN a.job j WHERE j.companyProfile.id = :companyProfileId AND a.appliedAt BETWEEN :start AND :end")
+    long countByCompanyProfileIdAndAppliedAtBetween(@Param("companyProfileId") UUID companyProfileId,
+            @Param("start") Instant start, @Param("end") Instant end);
 }

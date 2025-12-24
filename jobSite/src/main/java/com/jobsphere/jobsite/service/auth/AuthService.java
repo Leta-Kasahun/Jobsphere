@@ -11,8 +11,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -170,5 +174,26 @@ public class AuthService {
         String refreshToken = createRefreshToken(email);
 
         return Map.of("token", accessToken, "refreshToken", refreshToken, "email", email, "userType", userType);
+    }
+
+    public UUID getCurrentUserId() {
+        String email = getCurrentUserEmail();
+        return userRepository.findByEmailIgnoreCase(email)
+                .map(User::getId)
+                .orElseThrow(() -> new AuthException("User not found"));
+    }
+
+    public String getCurrentUserEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AuthException("User not authenticated");
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
     }
 }

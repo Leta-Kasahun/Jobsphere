@@ -28,4 +28,6 @@ public interface CompanyVerificationRepository extends JpaRepository<CompanyVeri
     List<CompanyVerification> findPendingVerificationsWithUser(@Param("status") String status);
 
     boolean existsByUserIdAndStatus(UUID userId, String status);
+
+    long countByStatus(String status);
 }

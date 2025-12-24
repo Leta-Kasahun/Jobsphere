@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,4 +41,13 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
 
         @Query("SELECT COUNT(j) FROM Job j WHERE j.companyProfile.userId = :userId")
         long countByCompanyProfileUserId(@Param("userId") UUID userId);
+
+        long countByCreatedAtBetween(Instant start, Instant end);
+
+        long countByCompanyProfileId(UUID companyProfileId);
+
+        long countByCompanyProfileIdAndIsActiveTrue(UUID companyProfileId);
+
+        @Query("SELECT j.category, COUNT(j) FROM Job j WHERE j.companyProfile.id = :companyProfileId GROUP BY j.category")
+        List<Object[]> countJobsByCategory(@Param("companyProfileId") UUID companyProfileId);
 }
