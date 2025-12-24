@@ -40,6 +40,11 @@ public class JobService {
     @Transactional
     public JobResponse createJob(JobCreateRequest request) {
         UUID userId = authenticationService.getCurrentUserId();
+        return createJobForUser(request, userId);
+    }
+
+    @Transactional
+    public JobResponse createJobForUser(JobCreateRequest request, UUID userId) {
         log.info("Creating job for user: {} with title: {}", userId, request.title());
 
         CompanyProfile companyProfile = companyProfileRepository.findByUserId(userId)

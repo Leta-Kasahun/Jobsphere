@@ -37,4 +37,7 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
 
         @Query("SELECT j FROM Job j JOIN FETCH j.companyProfile cp WHERE j.id = :jobId AND j.isActive = true AND j.status IN ('OPEN', 'HIRED')")
         Job findActiveJobWithCompanyProfile(@Param("jobId") UUID jobId);
+
+        @Query("SELECT COUNT(j) FROM Job j WHERE j.companyProfile.userId = :userId")
+        long countByCompanyProfileUserId(@Param("userId") UUID userId);
 }
