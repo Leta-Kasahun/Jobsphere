@@ -217,7 +217,8 @@ public class PaymentService {
                             JobCreateRequest jobRequest = lenientMapper.treeToValue(jobData, JobCreateRequest.class);
                             log.info("📋 Deserialized Job Request: {}", jobRequest);
 
-                            JobResponse postedJob = jobService.createJobForUser(jobRequest, payment.getUser().getId());
+                            JobResponse postedJob = jobService.createJobForUser(jobRequest, payment.getUser().getId(),
+                                    true);
                             log.info("🎉 Job automatically posted with ID: {}", postedJob.id());
                         } else {
                             log.warn("⚠️ Metadata does not contain 'jobData' key!");

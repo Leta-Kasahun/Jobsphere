@@ -28,12 +28,15 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
                         "AND (:category IS NULL OR :category = '' OR j.category = :category) " +
                         "AND (:jobType IS NULL OR :jobType = '' OR j.jobType = :jobType) " +
                         "AND (:workplaceType IS NULL OR :workplaceType = '' OR j.workplaceType = :workplaceType) " +
-                        "AND (:location IS NULL OR :location = '' OR UPPER(a.city) = UPPER(:location) OR UPPER(a.region) = UPPER(:location))")
+                        "AND (:location IS NULL OR :location = '' OR UPPER(a.city) = UPPER(:location) OR UPPER(a.region) = UPPER(:location)) "
+                        +
+                        "AND (:isFeatured IS NULL OR j.isFeatured = :isFeatured)")
         Page<Job> findActiveJobsWithFilters(
                         @Param("category") String category,
                         @Param("jobType") String jobType,
                         @Param("workplaceType") String workplaceType,
                         @Param("location") String location,
+                        @Param("isFeatured") Boolean isFeatured,
                         Pageable pageable);
 
         @Query("SELECT j FROM Job j JOIN FETCH j.companyProfile cp WHERE j.id = :jobId AND j.isActive = true AND j.status IN ('OPEN', 'HIRED')")

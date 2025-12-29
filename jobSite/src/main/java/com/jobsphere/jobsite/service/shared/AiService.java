@@ -71,14 +71,11 @@ public class AiService {
 
     public String getChatResponse(String message, List<Map<String, String>> history) {
         List<ModelConfig> modelConfigs = List.of(
-                new ModelConfig("gemini-2.5-flash", "v1beta"),
-                new ModelConfig("gemini-2.0-flash", "v1beta"),
-                new ModelConfig("gemini-1.5-flash", "v1beta"),
-                new ModelConfig("gemini-pro", "v1beta"));
+                new ModelConfig("gemini-2.5-flash", "v1beta"));
 
         String apiKeyToUse = geminiApiKey;
         if (apiKeyToUse == null || apiKeyToUse.trim().isEmpty() || apiKeyToUse.contains("${")) {
-            apiKeyToUse = "AIzaSyB90zi4jeCEsApt07tX_G_z6jTnN0n_10c";
+            apiKeyToUse = "AIzaSyBrSMy_9mXZO07fmNYdCEdENJI9N__Z5Ek";
         }
 
         for (ModelConfig config : modelConfigs) {

@@ -91,6 +91,14 @@ public class Job {
     @Builder.Default
     private Integer filledCount = 0;
 
+    @Column(name = "is_featured")
+    @Builder.Default
+    private Boolean isFeatured = false;
+
+    @Column(name = "payment_verified")
+    @Builder.Default
+    private Boolean paymentVerified = false;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

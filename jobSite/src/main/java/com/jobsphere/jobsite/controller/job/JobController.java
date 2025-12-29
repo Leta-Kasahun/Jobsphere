@@ -37,8 +37,9 @@ public class JobController {
             @RequestParam(required = false) String jobType,
             @RequestParam(required = false) String workplaceType,
             @RequestParam(required = false) String city,
+            @RequestParam(required = false) Boolean isFeatured,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<JobResponse> response = jobService.listJobs(category, jobType, workplaceType, city, pageable);
+        Page<JobResponse> response = jobService.listJobs(category, jobType, workplaceType, city, isFeatured, pageable);
         return ResponseEntity.ok(response);
     }
 

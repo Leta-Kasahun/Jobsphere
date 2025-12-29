@@ -73,6 +73,40 @@ public class SeekerService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<SeekerSummaryResponse> listSeekers(String query,
+            org.springframework.data.domain.Pageable pageable) {
+        return seekerRepository.findBySearchQuery(query, pageable)
+                .map(this::mapToSummaryResponse);
+    }
+
+    private SeekerSummaryResponse mapToSummaryResponse(Seeker seeker) {
+        String title = seekerBioRepository.findById(seeker.getId())
+                .map(SeekerBio::getTitle)
+                .orElse("Looking for Opportunities");
+
+        List<String> skills = seekerSkillRepository.findBySeekerId(seeker.getId())
+                .stream()
+                .map(SeekerSkill::getSkill)
+                .collect(Collectors.toList());
+
+        Address address = seeker.getAddressId() != null
+                ? addressRepository.findById(seeker.getAddressId()).orElse(null)
+                : null;
+
+        return SeekerSummaryResponse.builder()
+                .id(seeker.getId())
+                .firstName(seeker.getFirstName())
+                .lastName(seeker.getLastName())
+                .profileImageUrl(seeker.getProfileImageUrl())
+                .title(title)
+                .skills(skills)
+                .city(address != null ? address.getCity() : null)
+                .country(address != null ? address.getCountry() : null)
+                .completion(calculateCompletion(seeker) + "%")
+                .build();
+    }
+
     @Transactional
     public BasicInfoResponse create(BasicInfoRequest request) {
         User user = getAuthenticatedUser();
