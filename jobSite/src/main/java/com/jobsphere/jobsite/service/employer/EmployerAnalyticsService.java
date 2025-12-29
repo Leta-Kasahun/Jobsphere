@@ -1,8 +1,6 @@
 package com.jobsphere.jobsite.service.employer;
 
 import com.jobsphere.jobsite.dto.employer.EmployerStatsResponse;
-import com.jobsphere.jobsite.exception.ResourceNotFoundException;
-import com.jobsphere.jobsite.model.employer.CompanyProfile;
 import com.jobsphere.jobsite.repository.application.ApplicationRepository;
 import com.jobsphere.jobsite.repository.employer.CompanyProfileRepository;
 import com.jobsphere.jobsite.repository.job.JobRepository;
@@ -28,10 +26,21 @@ public class EmployerAnalyticsService {
     private final CompanyProfileRepository companyProfileRepository;
 
     public EmployerStatsResponse getStats(UUID userId) {
-        CompanyProfile profile = companyProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company profile not found for user: " + userId));
+        var profileOpt = companyProfileRepository.findByUserId(userId);
 
-        UUID companyProfileId = profile.getId();
+        if (profileOpt.isEmpty()) {
+            return EmployerStatsResponse.builder()
+                    .totalJobs(0L)
+                    .activeJobs(0L)
+                    .totalApplicants(0L)
+                    .hiredApplicants(0L)
+                    .applicationGrowth(new HashMap<>())
+                    .statusDistribution(new HashMap<>())
+                    .categoryDistribution(new HashMap<>())
+                    .build();
+        }
+
+        UUID companyProfileId = profileOpt.get().getId();
 
         EmployerStatsResponse stats = new EmployerStatsResponse();
         stats.setTotalJobs(jobRepository.countByCompanyProfileId(companyProfileId));

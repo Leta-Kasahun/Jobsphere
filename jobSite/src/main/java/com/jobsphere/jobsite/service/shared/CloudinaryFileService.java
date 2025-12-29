@@ -48,7 +48,9 @@ public class CloudinaryFileService {
     public String uploadImage(MultipartFile file, String folder) throws IOException {
         validateImageFile(file);
 
-        String publicId = folder + "/" + UUID.randomUUID();
+        // Cloudinary automatically appends the folder if specified in params,
+        // so we don't need to prefix it in the public_id manually.
+        String publicId = UUID.randomUUID().toString();
 
         @SuppressWarnings("unchecked")
         Map<String, Object> uploadParams = ObjectUtils.asMap(
@@ -80,10 +82,18 @@ public class CloudinaryFileService {
     public String uploadDocument(MultipartFile file, String folder) throws IOException {
         validateDocumentFile(file);
 
-        String publicId = folder + "/" + UUID.randomUUID();
+        // Cloudinary automatically appends the folder if specified in params
+        String publicId = UUID.randomUUID().toString();
 
+        // Use "auto" to let Cloudinary detect the best resource type (likely "image"
+        // for PDF to allow previews)
+        // or "raw" for generic files. For PDFs, "auto" usually works well.
         String resourceType = "auto";
         if (file.getContentType() != null && file.getContentType().equalsIgnoreCase("application/pdf")) {
+            // Forcing 'image' for PDF allows page-by-page transformation/preview,
+            // but for simple storage/retrieval 'auto' is fine.
+            // Keeping 'image' logic if that was the intent, but removing the folder prefix
+            // is key.
             resourceType = "image";
         }
 
@@ -115,7 +125,7 @@ public class CloudinaryFileService {
     public String uploadVideo(MultipartFile file, String folder) throws IOException {
         validateVideoFile(file);
 
-        String publicId = folder + "/" + UUID.randomUUID();
+        String publicId = UUID.randomUUID().toString();
 
         @SuppressWarnings("unchecked")
         Map<String, Object> uploadParams = ObjectUtils.asMap(
@@ -131,6 +141,53 @@ public class CloudinaryFileService {
 
         log.info("Video uploaded successfully to Cloudinary: {}", secureUrl);
         return secureUrl;
+    }
+
+    /**
+     * Generates an authenticated (signed) URL for a file.
+     * Useful for accessing files in restricted folders or resolving 401 errors.
+     *
+     * @param url The original file URL
+     * @return The signed URL
+     */
+    public String generateAuthenticatedUrl(String url) {
+        if (url == null || url.isEmpty())
+            return null;
+
+        String publicId = extractPublicIdFromUrl(url);
+        String version = extractVersionFromUrl(url);
+
+        log.info("Generating Signed URL. Input: {}", url);
+        log.info("Extracted PublicID: {}", publicId);
+        log.info("Extracted Version: {}", version);
+
+        if (publicId == null)
+            return url;
+
+        String format = "pdf"; // Default to pdf for these docs
+        if (url.toLowerCase().endsWith(".png"))
+            format = "png";
+        else if (url.toLowerCase().endsWith(".jpg") || url.toLowerCase().endsWith(".jpeg"))
+            format = "jpg";
+
+        try {
+            com.cloudinary.Url urlBuilder = cloudinary.url()
+                    .type("authenticated")
+                    .format(format)
+                    .secure(true)
+                    .signed(true);
+
+            if (version != null) {
+                urlBuilder.version(version);
+            }
+
+            String finalUrl = urlBuilder.generate(publicId);
+            log.info("Generated Signed URL: {}", finalUrl);
+            return finalUrl;
+        } catch (Exception e) {
+            log.error("Failed to generate signed URL for {}", url, e);
+            return url;
+        }
     }
 
     /**
@@ -263,23 +320,40 @@ public class CloudinaryFileService {
                 return null;
 
             String path = url.substring(uploadIndex + "/upload/".length());
-            String[] segments = path.split("/");
-            if (segments.length == 0)
-                return null;
 
-            StringBuilder publicId = new StringBuilder();
-            for (String segment : segments) {
-                if (!segment.matches("^v\\d+$") && !segment.contains("_") && !segment.contains(",")) {
-                    if (publicId.length() > 0)
-                        publicId.append("/");
-                    String name = segment.contains(".") ? segment.substring(0, segment.lastIndexOf('.')) : segment;
-                    publicId.append(name);
-                }
+            // Remove version prefix if present
+            if (path.matches("^v\\d+/.*")) {
+                path = path.substring(path.indexOf('/') + 1);
             }
-            return publicId.length() > 0 ? publicId.toString() : null;
+
+            // Remove extension from last segment
+            int lastDot = path.lastIndexOf('.');
+            int lastSlash = path.lastIndexOf('/');
+            if (lastDot > lastSlash) {
+                path = path.substring(0, lastDot);
+            }
+
+            return path;
         } catch (Exception e) {
             log.warn("Failed to extract public_id from URL: {}", url, e);
             return null;
         }
+    }
+
+    private String extractVersionFromUrl(String url) {
+        if (url == null)
+            return null;
+        try {
+            int uploadIndex = url.indexOf("/upload/");
+            if (uploadIndex == -1)
+                return null;
+            String path = url.substring(uploadIndex + "/upload/".length());
+            if (path.matches("^v\\d+/.*")) {
+                String versionPart = path.substring(0, path.indexOf('/'));
+                return versionPart.substring(1); // Remove 'v'
+            }
+        } catch (Exception e) {
+        }
+        return null;
     }
 }

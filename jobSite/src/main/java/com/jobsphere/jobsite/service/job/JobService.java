@@ -11,6 +11,7 @@ import com.jobsphere.jobsite.repository.employer.CompanyProfileRepository;
 import com.jobsphere.jobsite.repository.job.JobRepository;
 import com.jobsphere.jobsite.repository.shared.AddressRepository;
 import com.jobsphere.jobsite.repository.application.ApplicationRepository;
+import com.jobsphere.jobsite.repository.employer.CompanyVerificationRepository;
 import com.jobsphere.jobsite.repository.seeker.JobAlertRepository;
 import com.jobsphere.jobsite.service.notification.NotificationService;
 import com.jobsphere.jobsite.service.shared.AuthenticationService;
@@ -35,17 +36,29 @@ public class JobService {
     private final AuthenticationService authenticationService;
     private final ApplicationRepository applicationRepository;
     private final JobAlertRepository jobAlertRepository;
+    private final CompanyVerificationRepository verificationRepository;
     private final NotificationService notificationService;
 
     @Transactional
     public JobResponse createJob(JobCreateRequest request) {
         UUID userId = authenticationService.getCurrentUserId();
-        return createJobForUser(request, userId);
+        return createJobForUser(request, userId, false);
     }
 
     @Transactional
-    public JobResponse createJobForUser(JobCreateRequest request, UUID userId) {
+    public JobResponse createJobForUser(JobCreateRequest request, UUID userId, boolean paymentVerified) {
         log.info("Creating job for user: {} with title: {}", userId, request.title());
+
+        // Enforce Company Verification
+        com.jobsphere.jobsite.model.employer.CompanyVerification verification = verificationRepository
+                .findByUserIdAndStatus(userId, "APPROVED")
+                .orElseThrow(() -> new IllegalStateException(
+                        "Your company account must be verified before posting jobs. Please complete the verification process in your profile."));
+
+        if (Boolean.FALSE.equals(verification.getCodeUsed())) {
+            throw new IllegalStateException(
+                    "You must complete the verification process by entering the code sent to your email before posting jobs.");
+        }
 
         CompanyProfile companyProfile = companyProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalStateException(
@@ -83,6 +96,7 @@ public class JobService {
                 .currency(request.currency())
                 .deadline(request.deadline())
                 .isActive(true)
+                .paymentVerified(paymentVerified)
                 .build();
 
         job = jobRepository.save(job);
@@ -185,19 +199,23 @@ public class JobService {
     @Transactional(readOnly = true)
     public Page<JobResponse> getEmployerJobs(Pageable pageable) {
         UUID userId = authenticationService.getCurrentUserId();
-        CompanyProfile companyProfile = companyProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company profile not found"));
+        var companyProfileOpt = companyProfileRepository.findByUserId(userId);
 
-        return jobRepository.findByCompanyProfileId(companyProfile.getId(), pageable)
+        if (companyProfileOpt.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        return jobRepository.findByCompanyProfileId(companyProfileOpt.get().getId(), pageable)
                 .map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)
     public Page<JobResponse> listJobs(String category, String jobType, String workplaceType, String location,
-            Pageable pageable) {
-        log.info("Fetching jobs with filters - category: {}, type: {}, workplace: {}, location: {}",
-                category, jobType, workplaceType, location);
-        Page<Job> jobs = jobRepository.findActiveJobsWithFilters(category, jobType, workplaceType, location, pageable);
+            Boolean isFeatured, Pageable pageable) {
+        log.info("Fetching jobs with filters - category: {}, type: {}, workplace: {}, location: {}, featured: {}",
+                category, jobType, workplaceType, location, isFeatured);
+        Page<Job> jobs = jobRepository.findActiveJobsWithFilters(category, jobType, workplaceType, location, isFeatured,
+                pageable);
         log.info("Found {} jobs", jobs.getTotalElements());
         return jobs.map(this::mapToResponse);
     }
@@ -338,6 +356,13 @@ public class JobService {
 
     public JobResponse mapToResponse(Job job) {
         long applicantCount = applicationRepository.countByJobId(job.getId());
+
+        // Check if company is verified
+        boolean companyVerified = verificationRepository
+                .findByUserIdAndStatus(job.getCompanyProfile().getUserId(), "APPROVED")
+                .map(v -> Boolean.TRUE.equals(v.getCodeUsed()))
+                .orElse(false);
+
         return new JobResponse(
                 job.getId(),
                 job.getCompanyProfile().getId(),
@@ -368,6 +393,9 @@ public class JobService {
                 job.getStatus(),
                 job.getFilledCount(),
                 (int) applicantCount,
+                job.getIsFeatured(),
+                job.getPaymentVerified(),
+                companyVerified,
                 job.getCreatedAt(),
                 job.getUpdatedAt());
     }

@@ -20,6 +20,13 @@ import java.util.UUID;
 public class SeekerProfileController {
     private final SeekerService seekerService;
 
+    @GetMapping
+    public ResponseEntity<org.springframework.data.domain.Page<com.jobsphere.jobsite.dto.seeker.SeekerSummaryResponse>> listSeekers(
+            @RequestParam(required = false) String query,
+            @org.springframework.data.web.PageableDefault(size = 20) org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(seekerService.listSeekers(query, pageable));
+    }
+
     @PostMapping("/basic-info")
     public ResponseEntity<BasicInfoResponse> create(@Valid @RequestBody BasicInfoRequest request) {
         return ResponseEntity.ok(seekerService.create(request));

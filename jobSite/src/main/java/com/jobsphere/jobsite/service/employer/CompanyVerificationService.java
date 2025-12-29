@@ -25,34 +25,63 @@ public class CompanyVerificationService {
     private final UserRepository userRepository;
     private final EmailNotificationService emailNotificationService;
     private final VerificationCodeGeneratorService verificationCodeGenerator;
+    private final com.jobsphere.jobsite.service.shared.CloudinaryFileService cloudFileService;
 
     @Transactional
     public CompanyVerificationResponse submitVerification(UUID userId, CompanyVerificationRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        log.info("Processing verification submission for user: {}", userId);
 
-        // Check if user already has a pending or approved verification
-        if (verificationRepository.existsByUserIdAndStatus(userId, "PENDING") ||
-                verificationRepository.existsByUserIdAndStatus(userId, "APPROVED")) {
-            throw new IllegalStateException("You already have a pending or approved verification request");
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found: " + userId);
         }
 
-        String tradeLicenseUrl = "uploaded"; // Simplified - in production, implement proper file storage
+        // Check if user already has an approved verification
+        if (verificationRepository.existsByUserIdAndStatus(userId, "APPROVED")) {
+            throw new IllegalStateException("You already have an approved company verification.");
+        }
 
-        CompanyVerification verification = CompanyVerification.builder()
-                .userId(userId)
-                .companyName(request.companyName())
-                .tradeLicenseUrl(tradeLicenseUrl)
-                .tinNumber(request.tinNumber())
-                .website(request.website())
-                .status("PENDING")
-                .submittedAt(Instant.now())
-                .codeUsed(false)
-                .build();
+        // Check for existing pending verification to update
+        CompanyVerification verification = verificationRepository.findByUserIdAndStatus(userId, "PENDING")
+                .orElse(null);
+        boolean isUpdate = verification != null;
+
+        String tradeLicenseUrl;
+        try {
+            tradeLicenseUrl = cloudFileService.uploadDocument(request.tradeLicense(), "employers/verification");
+            log.info("Trade license uploaded: {}", tradeLicenseUrl);
+        } catch (Exception e) {
+            log.error("Failed to upload trade license", e);
+            throw new RuntimeException("Failed to upload trade license. Please try again.");
+        }
+
+        if (isUpdate) {
+            // Update existing pending verification
+            log.info("Updating existing pending verification for user: {}", userId);
+            verification.setCompanyName(request.companyName());
+            verification.setTradeLicenseUrl(tradeLicenseUrl);
+            verification.setTinNumber(request.tinNumber());
+            verification.setWebsite(request.website());
+            verification.setSubmittedAt(Instant.now());
+            // Status remains PENDING
+        } else {
+            // Create new verification
+            log.info("Creating new verification request for user: {}", userId);
+            verification = CompanyVerification.builder()
+                    .userId(userId)
+                    .companyName(request.companyName())
+                    .tradeLicenseUrl(tradeLicenseUrl)
+                    .tinNumber(request.tinNumber())
+                    .website(request.website())
+                    .status("PENDING")
+                    .submittedAt(Instant.now())
+                    .codeUsed(false)
+                    .build();
+        }
 
         verification = verificationRepository.save(verification);
 
-        log.info("Company verification submitted for user {} with company {}", userId, request.companyName());
+        log.info("Company verification {} successfully for user {}",
+                isUpdate ? "updated" : "submitted", userId);
         return mapToResponse(verification);
     }
 

@@ -24,6 +24,7 @@ public class AdminCompanyVerificationService {
     private final CompanyVerificationRepository verificationRepository;
     private final UserRepository userRepository;
     private final CompanyVerificationService verificationService;
+    private final com.jobsphere.jobsite.service.shared.CloudinaryFileService cloudFileService;
 
     public List<CompanyVerificationAdminResponse> getPendingVerifications() {
         log.info("Fetching all pending company verifications...");
@@ -90,7 +91,7 @@ public class AdminCompanyVerificationService {
                 verification.getUserId(),
                 user.getEmail(),
                 verification.getCompanyName(),
-                verification.getTradeLicenseUrl(),
+                cloudFileService.generateAuthenticatedUrl(verification.getTradeLicenseUrl()),
                 verification.getTinNumber(),
                 verification.getWebsite(),
                 verification.getStatus(),

@@ -8,12 +8,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record ApplicationCreateRequest(
-    @NotNull(message = "Job ID is required")
-    UUID jobId,
+        @NotNull(message = "Job ID is required") UUID jobId,
 
-    @NotBlank(message = "Cover letter is required")
-    @Size(max = 10000, message = "Cover letter cannot exceed 10,000 characters")
-    String coverLetter,
+        @NotBlank(message = "Cover letter is required") @Size(max = 10000, message = "Cover letter cannot exceed 10,000 characters") String coverLetter,
 
-    BigDecimal expectedSalary
-) {}
+        @NotNull(message = "Expected salary is required") @jakarta.validation.constraints.Positive(message = "Expected salary must be greater than zero") BigDecimal expectedSalary) {
+}
