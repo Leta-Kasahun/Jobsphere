@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,7 @@ public class SeekerService {
     private final SeekerTagRepository seekerTagRepository;
     private final SeekerSocialLinkRepository seekerSocialLinkRepository;
     private final SeekerCVRepository seekerCVRepository;
+    private final com.jobsphere.jobsite.service.shared.CloudinaryFileService cloudinaryFileService;
 
     private User getAuthenticatedUser() {
         org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext()
@@ -98,7 +100,7 @@ public class SeekerService {
                 .id(seeker.getId())
                 .firstName(seeker.getFirstName())
                 .lastName(seeker.getLastName())
-                .profileImageUrl(seeker.getProfileImageUrl())
+                .profileImageUrl(cloudinaryFileService.generateSignedUrl(seeker.getProfileImageUrl()))
                 .title(title)
                 .skills(skills)
                 .city(address != null ? address.getCity() : null)
@@ -190,10 +192,11 @@ public class SeekerService {
                         .title(p.getTitle())
                         .description(p.getDescription())
                         .projectUrl(p.getProjectUrl())
-                        .imageUrl(p.getImageUrl())
-                        .imageUrls(p.getImages() != null ? p.getImages().stream().map(SeekerProjectImage::getImageUrl)
+                        .imageUrl(cloudinaryFileService.generateSignedUrl(p.getImageUrl()))
+                        .imageUrls(p.getImages() != null ? p.getImages().stream()
+                                .map(img -> cloudinaryFileService.generateSignedUrl(img.getImageUrl()))
                                 .collect(Collectors.toList()) : List.of())
-                        .videoUrl(p.getVideoUrl())
+                        .videoUrl(cloudinaryFileService.generateSignedUrl(p.getVideoUrl()))
                         .videoType(p.getVideoType())
                         .build())
                 .collect(Collectors.toList());
@@ -211,17 +214,38 @@ public class SeekerService {
                 .collect(Collectors.toList());
 
         CVDto cv = seekerCVRepository.findBySeekerId(seekerId)
-                .map(c -> CVDto.builder()
-                        .id(c.getId())
-                        .title(c.getTitle())
-                        .about(c.getAbout())
-                        .cvUrl(c.getCvUrl() != null ? c.getCvUrl() : seeker.getCvUrl())
-                        .fileName(c.getFileName())
-                        .fileSize(c.getFileSize())
-                        .details(c.getDetails())
-                        .build())
+                .map(c -> {
+                    String url = c.getCvUrl();
+                    if (url == null)
+                        url = seeker.getCvUrl();
+
+                    // Fallback to URL inside details if main columns are null
+                    if (url == null && c.getDetails() != null) {
+                        try {
+                            Object header = c.getDetails().get("header");
+                            if (header instanceof Map) {
+                                Object embeddedUrl = ((Map<?, ?>) header).get("cv_url");
+                                if (embeddedUrl instanceof String) {
+                                    url = (String) embeddedUrl;
+                                }
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+
+                    return CVDto.builder()
+                            .id(c.getId())
+                            .title(c.getTitle())
+                            .about(c.getAbout())
+                            .cvUrl(cloudinaryFileService.generateSignedUrl(url))
+                            .fileName(c.getFileName())
+                            .fileSize(c.getFileSize())
+                            .details(c.getDetails())
+                            .build();
+                })
                 .orElseGet(() -> seeker.getCvUrl() != null
-                        ? CVDto.builder().cvUrl(seeker.getCvUrl()).fileName("CV.pdf").build()
+                        ? CVDto.builder().cvUrl(cloudinaryFileService.generateSignedUrl(seeker.getCvUrl()))
+                                .fileName("CV.pdf").build()
                         : null);
 
         return FullProfileResponse.builder()
@@ -258,7 +282,13 @@ public class SeekerService {
         UUID userId = user.getId();
         Seeker seeker = seekerRepository.findById(userId).orElse(null);
         if (seeker == null) {
-            seeker = Seeker.builder().id(userId).build();
+            String defaultFirstName = user.getEmail().split("@")[0];
+            seeker = Seeker.builder()
+                    .id(userId)
+                    .firstName(defaultFirstName)
+                    .middleName("")
+                    .phone("")
+                    .build();
         }
         if (seeker.getProfileImageUrl() != null) {
             cloudinaryImageService.deleteImage(seeker.getProfileImageUrl());
@@ -292,9 +322,14 @@ public class SeekerService {
         validateSeekerUser(user);
         UUID userId = user.getId();
         Seeker seeker = seekerRepository.findById(userId).orElse(null);
-
         if (seeker == null) {
-            seeker = Seeker.builder().id(userId).build();
+            String defaultFirstName = user.getEmail().split("@")[0];
+            seeker = Seeker.builder()
+                    .id(userId)
+                    .firstName(defaultFirstName)
+                    .middleName("")
+                    .phone("")
+                    .build();
         }
 
         Address address;
@@ -364,7 +399,7 @@ public class SeekerService {
                 .dateOfBirth(seeker.getDateOfBirth())
                 .email(user.getEmail())
                 .profileCompletion(calculateCompletion(seeker) + "%")
-                .profileImageUrl(seeker.getProfileImageUrl())
+                .profileImageUrl(cloudinaryFileService.generateSignedUrl(seeker.getProfileImageUrl()))
                 .address(addressDto)
                 .build();
     }

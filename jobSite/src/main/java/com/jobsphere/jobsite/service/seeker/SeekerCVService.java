@@ -23,6 +23,7 @@ public class SeekerCVService {
     private final SeekerCVRepository seekerCVRepository;
     private final SeekerRepository seekerRepository;
     private final UserRepository userRepository;
+    private final com.jobsphere.jobsite.service.shared.CloudinaryFileService cloudinaryFileService;
 
     private User getAuthenticatedUser() {
         return userRepository.findByEmail(
@@ -54,7 +55,7 @@ public class SeekerCVService {
                 .title(seekerCV.getTitle())
                 .about(seekerCV.getAbout())
                 .details(seekerCV.getDetails())
-                .cvUrl(seekerCV.getCvUrl())
+                .cvUrl(cloudinaryFileService.generateSignedUrl(seekerCV.getCvUrl()))
                 .fileName(seekerCV.getFileName())
                 .fileSize(seekerCV.getFileSize())
                 .build();
@@ -110,7 +111,7 @@ public class SeekerCVService {
                 .title(savedCV.getTitle())
                 .about(savedCV.getAbout())
                 .details(savedCV.getDetails())
-                .cvUrl(savedCV.getCvUrl())
+                .cvUrl(cloudinaryFileService.generateSignedUrl(savedCV.getCvUrl()))
                 .fileName(savedCV.getFileName())
                 .fileSize(savedCV.getFileSize())
                 .build();

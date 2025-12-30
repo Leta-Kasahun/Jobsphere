@@ -52,8 +52,8 @@ public class SeekerDetailsService {
         }
 
         return MediaDto.builder()
-                .profileImageUrl(seeker.getProfileImageUrl())
-                .cvUrl(seeker.getCvUrl())
+                .profileImageUrl(cloudinaryFileService.generateSignedUrl(seeker.getProfileImageUrl()))
+                .cvUrl(cloudinaryFileService.generateSignedUrl(seeker.getCvUrl()))
                 .build();
     }
 
@@ -65,7 +65,13 @@ public class SeekerDetailsService {
 
         Seeker seeker = seekerRepository.findById(seekerId).orElse(null);
         if (seeker == null) {
-            seeker = Seeker.builder().id(seekerId).build();
+            String defaultName = user.getEmail().split("@")[0];
+            seeker = Seeker.builder()
+                    .id(seekerId)
+                    .firstName(defaultName)
+                    .middleName("")
+                    .phone("")
+                    .build();
         }
 
         // Delete existing image if present
@@ -78,8 +84,8 @@ public class SeekerDetailsService {
         seekerRepository.save(seeker);
 
         return MediaDto.builder()
-                .profileImageUrl(seeker.getProfileImageUrl())
-                .cvUrl(seeker.getCvUrl())
+                .profileImageUrl(cloudinaryFileService.generateSignedUrl(seeker.getProfileImageUrl()))
+                .cvUrl(cloudinaryFileService.generateSignedUrl(seeker.getCvUrl()))
                 .build();
     }
 
@@ -105,8 +111,8 @@ public class SeekerDetailsService {
         }
 
         return MediaDto.builder()
-                .profileImageUrl(seeker.getProfileImageUrl())
-                .cvUrl(seeker.getCvUrl())
+                .profileImageUrl(cloudinaryFileService.generateSignedUrl(seeker.getProfileImageUrl()))
+                .cvUrl(cloudinaryFileService.generateSignedUrl(seeker.getCvUrl()))
                 .build();
     }
 
@@ -118,7 +124,13 @@ public class SeekerDetailsService {
 
         Seeker seeker = seekerRepository.findById(seekerId).orElse(null);
         if (seeker == null) {
-            seeker = Seeker.builder().id(seekerId).build();
+            String defaultName = user.getEmail().split("@")[0];
+            seeker = Seeker.builder()
+                    .id(seekerId)
+                    .firstName(defaultName)
+                    .middleName("")
+                    .phone("")
+                    .build();
         }
 
         // Delete existing CV if present
@@ -151,8 +163,8 @@ public class SeekerDetailsService {
                 });
 
         return MediaDto.builder()
-                .profileImageUrl(seeker.getProfileImageUrl())
-                .cvUrl(seeker.getCvUrl())
+                .profileImageUrl(cloudinaryFileService.generateSignedUrl(seeker.getProfileImageUrl()))
+                .cvUrl(cloudinaryFileService.generateSignedUrl(seeker.getCvUrl()))
                 .build();
     }
 
@@ -186,8 +198,8 @@ public class SeekerDetailsService {
         }
 
         return MediaDto.builder()
-                .profileImageUrl(seeker.getProfileImageUrl())
-                .cvUrl(seeker.getCvUrl())
+                .profileImageUrl(cloudinaryFileService.generateSignedUrl(seeker.getProfileImageUrl()))
+                .cvUrl(cloudinaryFileService.generateSignedUrl(seeker.getCvUrl()))
                 .build();
     }
 }

@@ -82,20 +82,20 @@ public class CloudinaryFileService {
     public String uploadDocument(MultipartFile file, String folder) throws IOException {
         validateDocumentFile(file);
 
-        // Cloudinary automatically appends the folder if specified in params
-        String publicId = UUID.randomUUID().toString();
+        // ALWAYS use 'raw' for documents. This treats them as plain binary files.
+        // Using 'image' for PDFs can trigger 401/404 errors due to Cloudinary's
+        // default security settings restricting PDF-as-image delivery.
+        String resourceType = "raw";
 
-        // Use "auto" to let Cloudinary detect the best resource type (likely "image"
-        // for PDF to allow previews)
-        // or "raw" for generic files. For PDFs, "auto" usually works well.
-        String resourceType = "auto";
-        if (file.getContentType() != null && file.getContentType().equalsIgnoreCase("application/pdf")) {
-            // Forcing 'image' for PDF allows page-by-page transformation/preview,
-            // but for simple storage/retrieval 'auto' is fine.
-            // Keeping 'image' logic if that was the intent, but removing the folder prefix
-            // is key.
-            resourceType = "image";
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf('.')).toLowerCase();
         }
+
+        // For 'raw' resources, the extension MUST be part of the public_id
+        // for Cloudinary to serve it with the correct Content-Type.
+        String publicId = UUID.randomUUID().toString() + extension;
 
         @SuppressWarnings("unchecked")
         Map<String, Object> uploadParams = ObjectUtils.asMap(
@@ -109,7 +109,7 @@ public class CloudinaryFileService {
                 uploadParams);
         String secureUrl = (String) uploadResult.get("secure_url");
 
-        log.info("Document uploaded successfully to Cloudinary: {}", secureUrl);
+        log.info("Document uploaded successfully to Cloudinary as {}: {}", resourceType, secureUrl);
         return secureUrl;
     }
 
@@ -148,46 +148,83 @@ public class CloudinaryFileService {
      * Useful for accessing files in restricted folders or resolving 401 errors.
      *
      * @param url The original file URL
-     * @return The signed URL
+     * @return A signed URL
      */
-    public String generateAuthenticatedUrl(String url) {
-        if (url == null || url.isEmpty())
-            return null;
-
-        String publicId = extractPublicIdFromUrl(url);
-        String version = extractVersionFromUrl(url);
-
-        log.info("Generating Signed URL. Input: {}", url);
-        log.info("Extracted PublicID: {}", publicId);
-        log.info("Extracted Version: {}", version);
-
-        if (publicId == null)
+    public String generateSignedUrl(String url) {
+        if (url == null || url.isEmpty() || !url.contains("cloudinary.com")) {
             return url;
-
-        String format = "pdf"; // Default to pdf for these docs
-        if (url.toLowerCase().endsWith(".png"))
-            format = "png";
-        else if (url.toLowerCase().endsWith(".jpg") || url.toLowerCase().endsWith(".jpeg"))
-            format = "jpg";
+        }
 
         try {
-            com.cloudinary.Url urlBuilder = cloudinary.url()
-                    .type("authenticated")
-                    .format(format)
-                    .secure(true)
-                    .signed(true);
+            // Ensure we use HTTPS
+            if (url.startsWith("http://")) {
+                url = url.replace("http://", "https://");
+            }
 
-            if (version != null) {
+            // Strip existing signature: s--...--
+            String cleanUrl = url.replaceFirst("/s--[^/]+--/", "/");
+
+            String publicId = extractPublicIdFromUrl(cleanUrl);
+            String version = extractVersionFromUrl(cleanUrl);
+
+            if (publicId == null)
+                return url;
+
+            // Detect delivery type (upload, authenticated, private)
+            String type = "upload";
+            if (url.contains("/authenticated/"))
+                type = "authenticated";
+            else if (url.contains("/private/"))
+                type = "private";
+
+            // Detect resource type (image, raw, video)
+            String resourceType = "image";
+            if (url.contains("/raw/"))
+                resourceType = "raw";
+            else if (url.contains("/video/"))
+                resourceType = "video";
+
+            // Extract format (extension)
+            String format = null;
+            if (!"raw".equals(resourceType)) {
+                int lastDot = url.lastIndexOf('.');
+                int lastSlash = url.lastIndexOf('/');
+                if (lastDot > lastSlash) {
+                    format = url.substring(lastDot + 1);
+                }
+            }
+
+            com.cloudinary.Url urlBuilder = cloudinary.url()
+                    .resourceType(resourceType)
+                    .type(type)
+                    .signed(true)
+                    .secure(true);
+
+            if (version != null && !version.isEmpty()) {
                 urlBuilder.version(version);
             }
 
-            String finalUrl = urlBuilder.generate(publicId);
-            log.info("Generated Signed URL: {}", finalUrl);
-            return finalUrl;
+            // IMPORTANT: For 'raw' resources, DO NOT use .format() because the
+            // extension is already embedded in the publicId.
+            if (format != null && !format.isEmpty() && !"raw".equals(resourceType)) {
+                urlBuilder.format(format);
+            }
+
+            String signedUrl = urlBuilder.generate(publicId);
+            log.debug("URL Signed: {} -> {}", url, signedUrl);
+            return signedUrl;
         } catch (Exception e) {
-            log.error("Failed to generate signed URL for {}", url, e);
+            log.warn("Failed to generate signed URL for {}: {}", url, e.getMessage());
             return url;
         }
+    }
+
+    /**
+     * Generates an authenticated (signed) URL for a file.
+     * Legacy method, now uses the more robust generateSignedUrl.
+     */
+    public String generateAuthenticatedUrl(String url) {
+        return generateSignedUrl(url);
     }
 
     /**
@@ -315,25 +352,51 @@ public class CloudinaryFileService {
             return null;
 
         try {
-            int uploadIndex = url.indexOf("/upload/");
-            if (uploadIndex == -1)
+            String temp = url;
+            // Remove everything before delivery type segments
+            String[] markers = { "/upload/", "/authenticated/", "/private/" };
+            int markerIndex = -1;
+            for (String marker : markers) {
+                markerIndex = temp.indexOf(marker);
+                if (markerIndex != -1) {
+                    temp = temp.substring(markerIndex + marker.length());
+                    break;
+                }
+            }
+
+            if (markerIndex == -1)
                 return null;
 
-            String path = url.substring(uploadIndex + "/upload/".length());
-
-            // Remove version prefix if present
-            if (path.matches("^v\\d+/.*")) {
-                path = path.substring(path.indexOf('/') + 1);
+            // Strip signature if present: s--...--
+            if (temp.startsWith("s--")) {
+                int nextSlash = temp.indexOf('/');
+                if (nextSlash != -1) {
+                    temp = temp.substring(nextSlash + 1);
+                }
             }
 
-            // Remove extension from last segment
-            int lastDot = path.lastIndexOf('.');
-            int lastSlash = path.lastIndexOf('/');
-            if (lastDot > lastSlash) {
-                path = path.substring(0, lastDot);
+            // Strip version: v123/
+            if (temp.matches("^v\\d+/.*")) {
+                int nextSlash = temp.indexOf('/');
+                if (nextSlash != -1) {
+                    temp = temp.substring(nextSlash + 1);
+                }
             }
 
-            return path;
+            // Detect resource type from original URL
+            boolean isRaw = url.contains("/raw/");
+
+            // Cloudinary public_ids for images/videos in URLs DO NOT include the extension
+            // unless it's a 'raw' resource where the extension IS the public_id.
+            if (!isRaw) {
+                int lastDot = temp.lastIndexOf('.');
+                int lastSlash = temp.lastIndexOf('/');
+                if (lastDot > lastSlash) {
+                    temp = temp.substring(0, lastDot);
+                }
+            }
+
+            return temp;
         } catch (Exception e) {
             log.warn("Failed to extract public_id from URL: {}", url, e);
             return null;
@@ -341,15 +404,32 @@ public class CloudinaryFileService {
     }
 
     private String extractVersionFromUrl(String url) {
-        if (url == null)
+        if (url == null || url.isEmpty())
             return null;
         try {
-            int uploadIndex = url.indexOf("/upload/");
-            if (uploadIndex == -1)
+            String temp = url;
+            String[] markers = { "/upload/", "/authenticated/", "/private/" };
+            int markerIndex = -1;
+            for (String marker : markers) {
+                markerIndex = temp.indexOf(marker);
+                if (markerIndex != -1) {
+                    temp = temp.substring(markerIndex + marker.length());
+                    break;
+                }
+            }
+
+            if (markerIndex == -1)
                 return null;
-            String path = url.substring(uploadIndex + "/upload/".length());
-            if (path.matches("^v\\d+/.*")) {
-                String versionPart = path.substring(0, path.indexOf('/'));
+
+            // Skip signature if present
+            if (temp.startsWith("s--")) {
+                int slash = temp.indexOf('/');
+                if (slash != -1)
+                    temp = temp.substring(slash + 1);
+            }
+
+            if (temp.matches("^v\\d+/.*")) {
+                String versionPart = temp.substring(0, temp.indexOf('/'));
                 return versionPart.substring(1); // Remove 'v'
             }
         } catch (Exception e) {
