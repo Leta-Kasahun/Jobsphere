@@ -107,3 +107,4 @@ public class Job {
     @Column(name = "updated_at")
     private Instant updatedAt;
 }
+ 
