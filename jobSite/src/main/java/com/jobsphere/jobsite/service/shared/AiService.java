@@ -75,7 +75,7 @@ public class AiService {
 
         String apiKeyToUse = geminiApiKey;
         if (apiKeyToUse == null || apiKeyToUse.trim().isEmpty() || apiKeyToUse.contains("${")) {
-            apiKeyToUse = "AIzaSyA-dd0deAsYZwa2zY7lTHV7naQV2ffz0tw";
+            apiKeyToUse = "";
         }
 
         for (ModelConfig config : modelConfigs) {
