@@ -16,14 +16,15 @@ JobSphere is a full-featured job portal backend built with Spring Boot and Postg
 # Employer Dashboard
 <img width="777" height="294" alt="image" src="https://github.com/user-attachments/assets/6c93c338-c51c-435b-8cbc-7fdef9f90201" />
 
-# Admin Dashboard
-<img width="614" height="383" alt="image_2025-12-24_01-37-32" src="https://github.com/user-attachments/assets/8a07ab62-4e10-42c8-bc62-6e07fa3b85fe" />
 
-# Jopb mangment page
+
+#  Admin Dashboard
 <img width="766" height="301" alt="image" src="https://github.com/user-attachments/assets/2a36fef0-5a7d-42b9-8f9b-0b514d3e0e3f" />
 
 
-
+# Job managment page
+<img width="614" height="383" alt="image_2025-12-24_01-37-32" src="https://github.com/user-attachments/assets/8a07ab62-4e10-42c8-bc62-6e07fa3b85fe" />
 
 # payment page
-<img width="959" height="432" alt="image_2025-12-24_16-18-30" src="https://github.com/user-attachments/assets/44a0897a-73e6-4f37-8f42-d72191607b1d" />
+<img width="737" height="427" alt="image_2025-12-24_03-14-30" src="https://github.com/user-attachments/assets/da408ee1-7d91-428b-b3a1-a683ec30675e" />
+
