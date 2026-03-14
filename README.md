@@ -1,12 +1,10 @@
-# HireNest / JobSphere
+# Etworks 
 This README is shared by both the frontend and backend projects.
 
-If you are in the frontend repo, see `C:\Users\Hp\Desktop\HireNestBackend\HireNest`.
-If you are in the backend repo, see `C:\Users\Hp\Desktop\HireNestBackend\Jobsphere\jobSite`.
 
 HireNest is the React frontend. JobSphere is the Spring Boot backend. Together they implement a job portal with seeker, employer, and admin flows.
 
-**What’s implemented (confirmed in code)**
+**What’s implemented **
 - Authentication: email/password registration, OTP verification, login, refresh, logout, password reset.
 - Admin authentication: admin login + OTP verification, refresh, logout.
 - Google OAuth: login with role selection and callback handling.
