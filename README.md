@@ -2,6 +2,7 @@
 This README is shared by both the frontend and backend projects.
 
 
+
 HireNest is the React frontend. JobSphere is the Spring Boot backend. Together they implement a job portal with seeker, employer, and admin flows.
 
 **What’s implemented **
